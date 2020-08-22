@@ -1,17 +1,16 @@
 {
-  "name": "msgpackr",
+  "name": "msgpackr-extract",
   "author": "Kris Zyp",
-  "version": "0.1.8",
-  "description": "Fast MessagePack implementation with extension for record structures",
+  "version": "0.1.0",
+  "description": "Node addon for string extraction for msgpackr",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "http://github.com/kriszyp/msgpackr"
+    "url": "http://github.com/kriszyp/msgpackr-extract"
   },
   "scripts": {
     "install": "prebuild-install || node-gyp rebuild",
     "rebuild": "node-gyp rebuild",
-    "benchmark": "./tests/benchmark.js",
     "prebuild": "prebuild --all --verbose",
     "test": "./node_modules/.bin/mocha tests/test*.js -u tdd"
   },
@@ -20,15 +19,5 @@
   "dependencies": {
     "nan": "^2.13.1",
     "prebuild-install": "^5.2.5"
-  },
-  "exports": {
-    "node": "./index.js",
-    "browser": "./browser.js"
-  },
-  "optionalDependencies": {},
-  "devDependencies": {
-    "@types/node": "latest",
-    "chai": "^4",
-    "mocha": "^4"
   }
 }
