@@ -47,7 +47,7 @@ void readString(int length, bool allowStringBlocks) {
 	}
 
 	if (lastStringEnd) {
-		if (position - lastStringEnd > 40 || end - stringStart > 4000) {
+		if (start - lastStringEnd > 40 || end - stringStart > 4000) {
 			target[writePosition++] = String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
 			stringStart = start;
 		}
