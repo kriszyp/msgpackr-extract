@@ -100,7 +100,16 @@ public:
 	//	Isolate *isolate = Isolate::GetCurrent();
 		if (lastStringEnd)
 			target[writePosition++] = String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
+#if NODE_VERSION_AT_LEAST(12,0,0)
 		return Array::New(isolate, target, writePosition);
+#else
+		Local<Array> array = Array::New(isolate, writePosition);
+		Local<Context> context = Nan::GetCurrentContext();
+		for (int i = 0; i < writePosition; i++) {
+			array->Set(context, i, target[i]);
+		}
+		return array;
+#endif
 	}
 };
 void setupTokenTable() {
@@ -189,8 +198,8 @@ static Extractor* extractor;
 #endif
 NAN_METHOD(extractStrings) {
 	Local<Context> context = Nan::GetCurrentContext();
-	int position = Local<Number>::Cast(info[0])->IntegerValue(context).ToChecked();
-	int size = Local<Number>::Cast(info[1])->IntegerValue(context).ToChecked();
+	int position = Local<Number>::Cast(info[0])->IntegerValue(context).FromJust();
+	int size = Local<Number>::Cast(info[1])->IntegerValue(context).FromJust();
 	uint8_t* source;
 	if (info[2]->IsArrayBufferView())
 		source = (uint8_t*) node::Buffer::Data(info[2]);
@@ -198,10 +207,16 @@ NAN_METHOD(extractStrings) {
 	info.GetReturnValue().Set(extractor->extractStrings(position, size, source));
 }
 
+NAN_METHOD(isOneByte) {
+	Local<Context> context = Nan::GetCurrentContext();
+	info.GetReturnValue().Set(Nan::New<Boolean>(Local<String>::Cast(info[0])->IsOneByte()));
+}
+
 void initializeModule(v8::Local<v8::Object> exports) {
 	extractor = new Extractor(); // create our thread-local extractor
 	setupTokenTable();
 	Nan::SetMethod(exports, "extractStrings", extractStrings);
+	Nan::SetMethod(exports, "isOneByte", isOneByte);
 }
 
 NODE_MODULE_CONTEXT_AWARE(extractor, initializeModule);

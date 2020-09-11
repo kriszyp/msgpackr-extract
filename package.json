@@ -1,7 +1,7 @@
 {
   "name": "msgpackr-extract",
   "author": "Kris Zyp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Node addon for string extraction for msgpackr",
   "license": "MIT",
   "repository": {
@@ -9,15 +9,14 @@
     "url": "http://github.com/kriszyp/msgpackr-extract"
   },
   "scripts": {
-    "install": "prebuild-install || node-gyp rebuild",
-    "rebuild": "node-gyp rebuild",
-    "prebuild": "prebuild --all --verbose",
+    "install": "node-gyp-build",
+    "recompile": "node-gyp build",
     "test": "./node_modules/.bin/mocha tests/test*.js -u tdd"
   },
   "main": "./index.js",
   "gypfile": true,
   "dependencies": {
-    "nan": "^2.13.1",
-    "prebuild-install": "^5.2.5"
+    "nan": "^2.14.1",
+    "node-gyp-build": "^4.2.3"
   }
 }
