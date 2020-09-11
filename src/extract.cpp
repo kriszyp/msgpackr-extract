@@ -89,11 +89,11 @@ public:
 					length += source[position++];
 					readString(length, false);
 				}
+				if (writePosition >= MAX_TARGET_SIZE)
+					break;
 			} else {
 				if (tokenTable[token]) {
 					position = tokenTable[token](token, source, position);
-					if (writePosition >= MAX_TARGET_SIZE)
-						break;
 				}
 			}
 		}
