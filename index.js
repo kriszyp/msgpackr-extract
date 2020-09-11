@@ -1,1 +1,1 @@
-module.exports = require('./build/Release/msgpackr-extract.node')
+module.exports = require('node-gyp-build')(__dirname)
