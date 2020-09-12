@@ -200,11 +200,10 @@ NAN_METHOD(extractStrings) {
 	Local<Context> context = Nan::GetCurrentContext();
 	int position = Local<Number>::Cast(info[0])->IntegerValue(context).FromJust();
 	int size = Local<Number>::Cast(info[1])->IntegerValue(context).FromJust();
-	uint8_t* source;
-	if (info[2]->IsArrayBufferView())
-		source = (uint8_t*) node::Buffer::Data(info[2]);
-
-	info.GetReturnValue().Set(extractor->extractStrings(position, size, source));
+	if (info[2]->IsArrayBufferView()) {
+		uint8_t* source = (uint8_t*) node::Buffer::Data(info[2]);
+		info.GetReturnValue().Set(extractor->extractStrings(position, size, source));
+	}
 }
 
 NAN_METHOD(isOneByte) {
