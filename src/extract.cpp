@@ -12,7 +12,7 @@ find the string tokens and determine their position and length. All strings are 
 using namespace v8;
 
 const int MAX_TARGET_SIZE = 255;
-typedef int (*token_handler)(int token, uint8_t* source, int position);
+typedef int (*token_handler)(uint8_t* source, int position, int size);
 token_handler tokenTable[256] = {};
 class Extractor {
 public:
@@ -59,7 +59,7 @@ public:
 		lastStringEnd = end;
 	}
 
-	Local<Array> extractStrings(int startingPosition, int size, uint8_t* inputSource) {
+	Local<Value> extractStrings(int startingPosition, int size, uint8_t* inputSource) {
 		writePosition = 0;
 		lastStringEnd = 0;
 		position = startingPosition;
@@ -71,33 +71,56 @@ public:
 			} else if (token < 0xc0) {
 				// fixstr, we want to convert this
 				token -= 0xa0;
+				if (token + position > size) {
+					Nan::ThrowError("Unexpected end of buffer reading string");
+					return Nan::Null();
+				}
 				readString(token, true);
 				if (writePosition >= MAX_TARGET_SIZE)
 					break;
 			} else if (token <= 0xda && token >= 0xd9) {
 				if (token == 0xd9) { //str 8
 					int length = source[position++];
+					if (length + position > size) {
+						Nan::ThrowError("Unexpected end of buffer reading string");
+						return Nan::Null();
+					}
 					readString(length, true);
 				} else if (token == 0xda) { //str 16
 					int length = source[position++] << 8;
 					length += source[position++];
+					if (length + position > size) {
+						Nan::ThrowError("Unexpected end of buffer reading string");
+						return Nan::Null();
+					}
 					readString(length, false);
 				} else { //str 32
 					int length = source[position++] << 24;
 					length += source[position++] << 16;
 					length += source[position++] << 8;
 					length += source[position++];
+					if (length + position > size) {
+						Nan::ThrowError("Unexpected end of buffer reading string");
+						return Nan::Null();
+					}
 					readString(length, false);
 				}
 				if (writePosition >= MAX_TARGET_SIZE)
 					break;
 			} else {
-				if (tokenTable[token]) {
-					position = tokenTable[token](token, source, position);
+				auto handle = tokenTable[token];
+				if ((size_t ) handle < 20) {
+					position += (size_t ) handle;
+				} else {
+					position = tokenTable[token](source, position, size);
+					if (position < 0) {
+						Nan::ThrowError("Unexpected end of buffer");
+						return Nan::Null();	
+					}
 				}
 			}
 		}
-	//	Isolate *isolate = Isolate::GetCurrent();
+
 		if (lastStringEnd)
 			target[writePosition++] = String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
 #if NODE_VERSION_AT_LEAST(12,0,0)
@@ -114,53 +137,49 @@ public:
 };
 void setupTokenTable() {
 	for (int i = 0; i < 256; i++) {
-		tokenTable[i] = nullptr;	
+		tokenTable[i] = nullptr;
 	}
 	// uint8, int8
-	tokenTable[0xcc] = tokenTable[0xd0] = ([](int token, uint8_t* source, int position) -> int {
-		return position + 1;
-	});
+	tokenTable[0xcc] = tokenTable[0xd0] = (token_handler) 1;
 	// uint16, int16, array 16, map 16, fixext 1
-	tokenTable[0xcd] = tokenTable[0xd1] = tokenTable[0xdc] = tokenTable[0xde] = tokenTable[0xd4] = ([](int token, uint8_t* source, int position) -> int {
-		return position + 2;;
-	});
+	tokenTable[0xcd] = tokenTable[0xd1] = tokenTable[0xdc] = tokenTable[0xde] = tokenTable[0xd4] = (token_handler) 2;
 	// fixext 16
-	tokenTable[0xd5] = ([](int token, uint8_t* source, int position) -> int {
-		return position + 3;
-	});
+	tokenTable[0xd5] = (token_handler) 3;
 	// uint32, int32, float32, array 32, map 32
-	tokenTable[0xce] = tokenTable[0xd2] = tokenTable[0xca] = tokenTable[0xdd] = tokenTable[0xdf] = ([](int token, uint8_t* source, int position) -> int {
-		return position + 4;
-	});
+	tokenTable[0xce] = tokenTable[0xd2] = tokenTable[0xca] = tokenTable[0xdd] = tokenTable[0xdf] = (token_handler) 4;
 	// fixext 4
-	tokenTable[0xd6] = ([](int token, uint8_t* source, int position) -> int {
-		return position + 5;
-	});
+	tokenTable[0xd6] = (token_handler) 5;
 	// uint64, int64, float64, fixext 8
-	tokenTable[0xcf] = tokenTable[0xd3] = tokenTable[0xcb] = ([](int token, uint8_t* source, int position) -> int {
-		return position + 8;
-	});
+	tokenTable[0xcf] = tokenTable[0xd3] = tokenTable[0xcb] = (token_handler) 8;
 	// fixext 8
-	tokenTable[0xd8] = ([](int token, uint8_t* source, int position) -> int {
-		return position + 9;
-	});
+	tokenTable[0xd8] = (token_handler) 9;
 	// fixext 16
-	tokenTable[0xd8] = ([](int token, uint8_t* source, int position) -> int {
-		return position + 17;
-	});
+	tokenTable[0xd8] = (token_handler) 17;
 	// bin 8
-	tokenTable[0xc4] = ([](int token, uint8_t* source, int position) -> int {
+	tokenTable[0xc4] = ([](uint8_t* source, int position, int size) -> int {
+		if (position >= size) {
+			Nan::ThrowError("Unexpected end of buffer");
+			return size;
+		}
 		int length = source[position++];
 		return position + length;
 	});
 	// bin 16
-	tokenTable[0xc5] = ([](int token, uint8_t* source, int position) -> int {
+	tokenTable[0xc5] = ([](uint8_t* source, int position, int size) -> int {
+		if (position + 2 > size) {
+			Nan::ThrowError("Unexpected end of buffer");
+			return size;
+		}
 		int length = source[position++] << 8;
 		length += source[position++];
 		return position + length;
 	});
 	// bin 32
-	tokenTable[0xc6] = ([](int token, uint8_t* source, int position) -> int {
+	tokenTable[0xc6] = ([](uint8_t* source, int position, int size) -> int {
+		if (position + 4 > size) {
+			Nan::ThrowError("Unexpected end of buffer");
+			return size;
+		}
 		int length = source[position++] << 24;
 		length += source[position++] << 16;
 		length += source[position++] << 8;
@@ -168,20 +187,32 @@ void setupTokenTable() {
 		return position + length;
 	});
 	// ext 8
-	tokenTable[0xc7] = ([](int token, uint8_t* source, int position) -> int {
+	tokenTable[0xc7] = ([](uint8_t* source, int position, int size) -> int {
+		if (position >= size) {
+			Nan::ThrowError("Unexpected end of buffer");
+			return size;
+		}
 		int length = source[position++];
 		position++;
 		return position + length;
 	});
 	// ext 16
-	tokenTable[0xc8] = ([](int token, uint8_t* source, int position) -> int {
+	tokenTable[0xc8] = ([](uint8_t* source, int position, int size) -> int {
+		if (position + 2 > size) {
+			Nan::ThrowError("Unexpected end of buffer");
+			return size;
+		}
 		int length = source[position++] << 8;
 		length += source[position++];
 		position++;
 		return position + length;
 	});
 	// ext 32
-	tokenTable[0xc9] = ([](int token, uint8_t* source, int position) -> int {
+	tokenTable[0xc9] = ([](uint8_t* source, int position, int size) -> int {
+		if (position + 4 > size) {
+			Nan::ThrowError("Unexpected end of buffer");
+			return size;
+		}
 		int length = source[position++] << 24;
 		length += source[position++] << 16;
 		length += source[position++] << 8;
