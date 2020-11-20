@@ -1,6 +1,7 @@
 {
   "variables": {
       "os_linux_compiler%": "gcc",
+      "build_v8_with_gn": "false"
   },
   "targets": [
     {
