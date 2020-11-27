@@ -78,7 +78,7 @@ public:
 				readString(token, true);
 				if (writePosition >= MAX_TARGET_SIZE)
 					break;
-			} else if (token <= 0xda && token >= 0xd9) {
+			} else if (token <= 0xdb && token >= 0xd9) {
 				if (token == 0xd9) { //str 8
 					int length = source[position++];
 					if (length + position > size) {
