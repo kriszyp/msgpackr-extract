@@ -65,4 +65,5 @@ tests/samples
 .vscode
 .vs
 
+.DS_Store
 build

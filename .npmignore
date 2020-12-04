@@ -3,3 +3,4 @@ node_modules/
 tests/samples
 .vs
 build/
+.DS_Store
