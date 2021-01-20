@@ -11,6 +11,18 @@ find the string tokens and determine their position and length. All strings are 
 #include <nan.h>
 using namespace v8;
 
+#ifndef thread_local
+#ifdef __GNUC__
+# define thread_local __thread
+#elif __STDC_VERSION__ >= 201112L
+# define thread_local _Thread_local
+#elif defined(_MSC_VER)
+# define thread_local __declspec(thread)
+#else
+# define thread_local
+#endif
+#endif
+
 const int MAX_TARGET_SIZE = 255;
 typedef int (*token_handler)(uint8_t* source, int position, int size);
 token_handler tokenTable[256] = {};
@@ -222,11 +234,8 @@ void setupTokenTable() {
 	});
 }
 
-#ifdef thread_local
 static thread_local Extractor* extractor;
-#else
-static Extractor* extractor;
-#endif
+
 NAN_METHOD(extractStrings) {
 	Local<Context> context = Nan::GetCurrentContext();
 	int position = Local<Number>::Cast(info[0])->IntegerValue(context).FromJust();
