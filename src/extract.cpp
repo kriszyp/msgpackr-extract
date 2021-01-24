@@ -40,12 +40,14 @@ public:
 		int start = position;
 		int charPosition = position;
 		int end = position += length;
-		uint32_t* sourceWords = (uint32_t*) source;
+		//uint32_t* sourceWords = (uint32_t*) source;
 		if (allowStringBlocks) { // for larger strings, we don't bother to check every character for being latin, and just go right to creating a new string
 			while(charPosition < end) {
-				if ((charPosition & 0x3) == 0 && ((sourceWords[charPosition >> 2] & 0x80808080) == 0))
-					charPosition += 4;
-				else if (source[charPosition] < 0x80) // ensure we character is latin and can be decoded as one byte
+				// TODO: Its not clear if and when this is faster, but sometimes is:
+		//		if ((charPosition & 0x3) == 0 && ((sourceWords[charPosition >> 2] & 0x80808080) == 0))
+		//			charPosition += 4;
+				//else
+				if (source[charPosition] < 0x80) // ensure we character is latin and can be decoded as one byte
 					charPosition++;
 				else {
 					break;
