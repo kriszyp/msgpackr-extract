@@ -64,7 +64,7 @@ public:
 		}
 
 		if (lastStringEnd) {
-			if (start - lastStringEnd > 40 || end - stringStart > 4000) {
+			if (start - lastStringEnd > 40 || end - stringStart > 8192) {
 				target[writePosition++] = String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
 				stringStart = start;
 			}
@@ -108,7 +108,7 @@ public:
 						Nan::ThrowError("Unexpected end of buffer reading string");
 						return Nan::Null();
 					}
-					readString(length, false);
+					readString(length, length < 1024);
 				} else { //str 32
 					int length = source[position++] << 24;
 					length += source[position++] << 16;
