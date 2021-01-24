@@ -38,17 +38,21 @@ public:
 	Isolate *isolate = Isolate::GetCurrent();
 	void readString(int length, bool allowStringBlocks) {
 		int start = position;
-		int end = position + length;
+		int charPosition = position;
+		int end = position += length;
+		uint32_t* sourceWords = (uint32_t*) source;
 		if (allowStringBlocks) { // for larger strings, we don't bother to check every character for being latin, and just go right to creating a new string
-			while(position < end) {
-				if (source[position] < 0x80) // ensure we character is latin and can be decoded as one byte
-					position++;
+			while(charPosition < end) {
+				if ((charPosition & 0x3) == 0 && ((sourceWords[charPosition >> 2] & 0x80808080) == 0))
+					charPosition += 4;
+				else if (source[charPosition] < 0x80) // ensure we character is latin and can be decoded as one byte
+					charPosition++;
 				else {
 					break;
 				}
 			}
 		}
-		if (position < end) {
+		if (charPosition < end) {
 			// non-latin character
 			if (lastStringEnd) {
 				target[writePosition++] = String::NewFromOneByte(isolate,  (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
@@ -56,7 +60,6 @@ public:
 			}
 			// use standard utf-8 conversion
 			target[writePosition++] = Nan::New<v8::String>((char*) source + start, (int) length).ToLocalChecked();
-			position = end;
 			return;
 		}
 
