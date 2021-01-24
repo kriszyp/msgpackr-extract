@@ -133,8 +133,13 @@ public:
 			}
 		}
 
-		if (lastStringEnd)
+		if (lastStringEnd) {
+			if (writePosition == 0)
+				return String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
 			target[writePosition++] = String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
+		} else if (writePosition == 0) {
+			return target[0];
+		}
 #if NODE_VERSION_AT_LEAST(12,0,0)
 		return Array::New(isolate, target, writePosition);
 #else
