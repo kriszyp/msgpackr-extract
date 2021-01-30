@@ -1,7 +1,7 @@
 {
   "name": "msgpackr-extract",
   "author": "Kris Zyp",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Node addon for string extraction for msgpackr",
   "license": "MIT",
   "repository": {
