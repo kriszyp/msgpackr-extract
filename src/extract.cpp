@@ -257,7 +257,6 @@ NAN_METHOD(extractStrings) {
 }
 
 NAN_METHOD(isOneByte) {
-	Local<Context> context = Nan::GetCurrentContext();
 	info.GetReturnValue().Set(Nan::New<Boolean>(Local<String>::Cast(info[0])->IsOneByte()));
 }
 
