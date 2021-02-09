@@ -38,23 +38,17 @@ public:
 	Isolate *isolate = Isolate::GetCurrent();
 	void readString(int length, bool allowStringBlocks) {
 		int start = position;
-		int charPosition = position;
-		int end = position += length;
-		//uint32_t* sourceWords = (uint32_t*) source;
+		int end = position + length;
 		if (allowStringBlocks) { // for larger strings, we don't bother to check every character for being latin, and just go right to creating a new string
-			while(charPosition < end) {
-				// TODO: Its not clear if and when this is faster, but sometimes is:
-		//		if ((charPosition & 0x3) == 0 && ((sourceWords[charPosition >> 2] & 0x80808080) == 0))
-		//			charPosition += 4;
-				//else
-				if (source[charPosition] < 0x80) // ensure we character is latin and can be decoded as one byte
-					charPosition++;
+			while(position < end) {
+				if (source[position] < 0x80) // ensure we character is latin and can be decoded as one byte
+					position++;
 				else {
 					break;
 				}
 			}
 		}
-		if (charPosition < end) {
+		if (position < end) {
 			// non-latin character
 			if (lastStringEnd) {
 				target[writePosition++] = String::NewFromOneByte(isolate,  (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
@@ -62,11 +56,12 @@ public:
 			}
 			// use standard utf-8 conversion
 			target[writePosition++] = Nan::New<v8::String>((char*) source + start, (int) length).ToLocalChecked();
+			position = end;
 			return;
 		}
 
 		if (lastStringEnd) {
-			if (start - lastStringEnd > 40 || end - stringStart > 8192) {
+			if (start - lastStringEnd > 40 || end - stringStart > 6000) {
 				target[writePosition++] = String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
 				stringStart = start;
 			}
@@ -97,6 +92,10 @@ public:
 					break;
 			} else if (token <= 0xdb && token >= 0xd9) {
 				if (token == 0xd9) { //str 8
+					if (position >= size) {
+						Nan::ThrowError("Unexpected end of buffer reading string");
+						return Nan::Null();
+					}
 					int length = source[position++];
 					if (length + position > size) {
 						Nan::ThrowError("Unexpected end of buffer reading string");
@@ -104,14 +103,22 @@ public:
 					}
 					readString(length, true);
 				} else if (token == 0xda) { //str 16
+					if (2 + position > size) {
+						Nan::ThrowError("Unexpected end of buffer reading string");
+						return Nan::Null();
+					}
 					int length = source[position++] << 8;
 					length += source[position++];
 					if (length + position > size) {
 						Nan::ThrowError("Unexpected end of buffer reading string");
 						return Nan::Null();
 					}
-					readString(length, length < 1024);
+					readString(length, false);
 				} else { //str 32
+					if (4 + position > size) {
+						Nan::ThrowError("Unexpected end of buffer reading string");
+						return Nan::Null();
+					}
 					int length = source[position++] << 24;
 					length += source[position++] << 16;
 					length += source[position++] << 8;
@@ -142,7 +149,7 @@ public:
 			if (writePosition == 0)
 				return String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
 			target[writePosition++] = String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
-		} else if (writePosition == 0) {
+		} else if (writePosition == 1) {
 			return target[0];
 		}
 #if NODE_VERSION_AT_LEAST(12,0,0)
@@ -198,10 +205,8 @@ void setupTokenTable() {
 	});
 	// bin 32
 	tokenTable[0xc6] = ([](uint8_t* source, int position, int size) -> int {
-		if (position + 4 > size) {
-			Nan::ThrowError("Unexpected end of buffer");
-			return size;
-		}
+		if (position + 4 > size)
+			return -1;
 		int length = source[position++] << 24;
 		length += source[position++] << 16;
 		length += source[position++] << 8;
@@ -210,20 +215,16 @@ void setupTokenTable() {
 	});
 	// ext 8
 	tokenTable[0xc7] = ([](uint8_t* source, int position, int size) -> int {
-		if (position >= size) {
-			Nan::ThrowError("Unexpected end of buffer");
-			return size;
-		}
+		if (position >= size)
+			return -1;
 		int length = source[position++];
 		position++;
 		return position + length;
 	});
 	// ext 16
 	tokenTable[0xc8] = ([](uint8_t* source, int position, int size) -> int {
-		if (position + 2 > size) {
-			Nan::ThrowError("Unexpected end of buffer");
-			return size;
-		}
+		if (position + 2 > size)
+			return -1;
 		int length = source[position++] << 8;
 		length += source[position++];
 		position++;
@@ -231,10 +232,8 @@ void setupTokenTable() {
 	});
 	// ext 32
 	tokenTable[0xc9] = ([](uint8_t* source, int position, int size) -> int {
-		if (position + 4 > size) {
-			Nan::ThrowError("Unexpected end of buffer");
-			return size;
-		}
+		if (position + 4 > size)
+			return -1;
 		int length = source[position++] << 24;
 		length += source[position++] << 16;
 		length += source[position++] << 8;
