@@ -24,6 +24,21 @@
                 "-Wimplicit-fallthrough=2",
               ],
             }],
+            ["node_module_version >= 93", {
+              "cflags_cc": [
+                "-fPIC",
+                "-fvisibility=hidden",
+                "-fvisibility-inlines-hidden",
+                "-std=c++14"
+              ]
+            }, {
+             "cflags_cc": [
+              "-fPIC",
+              "-fvisibility=hidden",
+              "-fvisibility-inlines-hidden",
+              "-std=c++11"
+              ],
+            }],
           ],
           "ldflags": [
             "-fPIC",
@@ -34,22 +49,26 @@
             "-fvisibility=hidden",
             "-O3"
           ],
-          "cflags_cc": [
-            "-fPIC",
-            "-fvisibility=hidden",
-            "-fvisibility-inlines-hidden",
-            "-std=c++14"
-          ]
         }],
         ["OS=='mac'", {
-          "xcode_settings": {
-            "OTHER_CPLUSPLUSFLAGS" : ["-std=c++14"],
-            "MACOSX_DEPLOYMENT_TARGET": "10.7",
-            "OTHER_LDFLAGS": ["-std=c++14"],
-            "CLANG_CXX_LIBRARY": "libc++"
-          }
-        }],
-        ["OS=='win'", {
+          "conditions": [
+            ["node_module_version >= 93", {
+              "xcode_settings": {
+                "OTHER_CPLUSPLUSFLAGS" : ["-std=c++14"],
+                "MACOSX_DEPLOYMENT_TARGET": "10.7",
+                "OTHER_LDFLAGS": ["-std=c++14"],
+                "CLANG_CXX_LIBRARY": "libc++"
+              },
+            },
+            {
+              "xcode_settings": {
+                "OTHER_CPLUSPLUSFLAGS" : ["-std=c++11"],
+                "MACOSX_DEPLOYMENT_TARGET": "10.7",
+                "OTHER_LDFLAGS": ["-std=c++11"],
+                "CLANG_CXX_LIBRARY": "libc++"
+              }
+            }]
+          ]
         }],
       ],
     }
