@@ -181,7 +181,7 @@ void setupTokenTable() {
 	// uint64, int64, float64, fixext 8
 	tokenTable[0xcf] = tokenTable[0xd3] = tokenTable[0xcb] = (token_handler) 8;
 	// fixext 8
-	tokenTable[0xd8] = (token_handler) 9;
+	tokenTable[0xd7] = (token_handler) 9;
 	// fixext 16
 	tokenTable[0xd8] = (token_handler) 17;
 	// bin 8
