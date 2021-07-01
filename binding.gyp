@@ -1,6 +1,8 @@
 {
   "variables": {
       "os_linux_compiler%": "gcc",
+      "target%": "1",
+      "runtime%": "node",
       "build_v8_with_gn": "false"
   },
   "targets": [
@@ -18,24 +20,24 @@
           "variables": {
             "gcc_version" : "<!(<(os_linux_compiler) -dumpversion | cut -d '.' -f 1)",
           },
+          "cflags_cc": [
+            "-fPIC",
+            "-fvisibility=hidden",
+            "-fvisibility-inlines-hidden",
+            "-std=c++11"
+          ],
           "conditions": [
             ["gcc_version>=7", {
               "cflags": [
                 "-Wimplicit-fallthrough=2",
               ],
             }],
-            ["node_module_version >= 93", {
+            ["(node_module_version >= 93) | ((target > '13.0') & (runtime == 'electron'))", {
               "cflags_cc": [
-                "-fPIC",
-                "-fvisibility=hidden",
-                "-fvisibility-inlines-hidden",
                 "-std=c++14"
               ]
             }, {
              "cflags_cc": [
-              "-fPIC",
-              "-fvisibility=hidden",
-              "-fvisibility-inlines-hidden",
               "-std=c++11"
               ],
             }],
