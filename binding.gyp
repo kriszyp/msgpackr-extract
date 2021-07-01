@@ -24,21 +24,11 @@
             "-fPIC",
             "-fvisibility=hidden",
             "-fvisibility-inlines-hidden",
-            "-std=c++11"
           ],
           "conditions": [
             ["gcc_version>=7", {
               "cflags": [
                 "-Wimplicit-fallthrough=2",
-              ],
-            }],
-            ["(node_module_version >= 93) | ((target > '13.0') & (runtime == 'electron'))", {
-              "cflags_cc": [
-                "-std=c++14"
-              ]
-            }, {
-             "cflags_cc": [
-              "-std=c++11"
               ],
             }],
           ],
