@@ -42,14 +42,6 @@
             "-O3"
           ],
         }],
-        ["OS=='mac'", {
-          "xcode_settings": {
-            "OTHER_CPLUSPLUSFLAGS" : ["-std=c++14"],
-            "MACOSX_DEPLOYMENT_TARGET": "10.7",
-            "OTHER_LDFLAGS": ["-std=c++11"],
-            "CLANG_CXX_LIBRARY": "libc++"
-          }
-        }],
       ],
     }
   ]
