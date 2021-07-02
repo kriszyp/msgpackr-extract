@@ -1,8 +1,6 @@
 {
   "variables": {
       "os_linux_compiler%": "gcc",
-      "target%": "10.0",
-      "runtime%": "node",
       "build_v8_with_gn": "false"
   },
   "targets": [
