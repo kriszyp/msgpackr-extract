@@ -29,4 +29,4 @@ deploy:
   skip_cleanup: true
   on:
     node: node
-  api_key: "722ca76c77aeee5931270a32c9cedc702ec37d15"
+  api_key: "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"
