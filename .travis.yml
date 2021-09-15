@@ -26,5 +26,6 @@ deploy:
   file: "$ARCHIVE_NAME"
   skip_cleanup: true
   on:
+    tags: true
     node: node
   api_key:  '$GITHUB_API_KEY'
