@@ -11,7 +11,9 @@
   "scripts": {
     "install": "node-gyp-build",
     "recompile": "node-gyp build",
-    "prebuild": "prebuildify --arch=arm64 --target 16.9.0 && prebuildify --target 16.9.0 && prebuildify --target 14.17.6 && prebuildify --target 12.18.0",
+    "prebuild": "run-script-os",
+    "prebuild:darwin": "prebuildify --arch=arm64 --target 16.9.0 && prebuildify --arch=arm64 --target 14.17.6 && prebuildify --target 16.9.0 && prebuildify --target 14.17.6 && prebuildify --target 12.18.0",
+    "prebuild:default": "prebuildify --target 16.9.0 && prebuildify --target 14.17.6 && prebuildify --target 12.18.0",
     "before-publish": "prebuildify-ci download && prebuildify --target 16.9.0 && prebuildify --target 14.17.6 && prebuildify --target 12.18.0 && prebuildify --target electron@13.1.4",
     "test": ""
   },
@@ -23,6 +25,7 @@
   },
   "devDependencies": {
     "prebuildify": "^4.2.0",
-    "prebuildify-ci": "^1.0.5"
+    "prebuildify-ci": "^1.0.5",
+    "run-script-os": "^1.1.6"
   }
 }
