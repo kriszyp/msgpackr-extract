@@ -11,7 +11,7 @@
   "scripts": {
     "install": "node-gyp-build",
     "recompile": "node-gyp build",
-    "prebuild": "prebuildify --target 16.9.0",
+    "prebuild": "prebuildify --target 16.9.0 && prebuildify --target 14.17.6 && prebuildify --target 12.18.0",
     "test": ""
   },
   "main": "./index.js",
