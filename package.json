@@ -15,6 +15,7 @@
     "prebuild:darwin": "prebuildify --arch=arm64 --target 17.0.1 && prebuildify --arch=arm64 --target 16.9.0 && prebuildify --arch=arm64 --target 14.17.6 && prebuildify --target 17.0.1 && prebuildify --target 16.9.0 && prebuildify --target 14.17.6 && prebuildify --target 12.18.0",
     "prebuild:default": "prebuildify --target 17.0.1 && prebuildify --target 16.9.0 && prebuildify --target 14.17.6 && prebuildify --target 12.18.0",
     "before-publish": "prebuildify-ci download && prebuildify --target 17.0.1 && prebuildify --target 16.9.0 && prebuildify --target 14.17.6 && prebuildify --target 12.18.0 && prebuildify --target electron@13.1.4",
+    "test-prebuild": "prebuildify --target 16.9.0",
     "test": ""
   },
   "main": "./index.js",
