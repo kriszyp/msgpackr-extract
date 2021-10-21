@@ -24,7 +24,7 @@
     "node-gyp-build": "^4.2.3"
   },
   "devDependencies": {
-    "prebuildify": "^4.2.0",
+    "prebuildify": "kriszyp/prebuildify#b78c5a9",
     "prebuildify-ci": "^1.0.5",
     "run-script-os": "^1.1.6"
   }
