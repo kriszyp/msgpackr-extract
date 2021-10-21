@@ -17,8 +17,8 @@ jobs:
       - run: npm install
       - run: npm run prebuild-arm64
         env:
-          CC=aarch64-linux-gnu-gcc-8
-          CXX=aarch64-linux-gnu-g++-8
+          CC: aarch64-linux-gnu-gcc-8
+          CXX: aarch64-linux-gnu-g++-8
       - run: npm run prebuild
       - run: tar --create --verbose --file=prebuild-linux.tar -C=prebuilds .
       - name: Prebuild
