@@ -12,10 +12,10 @@ jobs:
           node-version: 12
       - run: npm install
       - run: npm run prebuild
-      - run: tar --create --verbose -z --file=prebuild-darwin.tgz prebuilds
+      - run: zip -r prebuild-darwin.zip prebuilds
       - run: hexdump "prebuilds/darwin-x64/node.abi93.node" | head -10
       - name: Prebuild
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: prebuild-darwin.tgz
+          files: prebuild-darwin.zip
