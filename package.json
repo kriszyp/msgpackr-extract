@@ -1,7 +1,7 @@
 {
   "name": "msgpackr-extract",
   "author": "Kris Zyp",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "Node addon for string extraction for msgpackr",
   "license": "MIT",
   "repository": {
@@ -12,9 +12,9 @@
     "install": "node-gyp-build",
     "recompile": "node-gyp build",
     "prebuild": "run-script-os",
-    "prebuild:darwin": "prebuildify --arch=arm64 --target 16.9.0 && prebuildify --arch=arm64 --target 14.17.6 && prebuildify --target 16.9.0 && prebuildify --target 14.17.6 && prebuildify --target 12.18.0",
-    "prebuild:default": "prebuildify --target 16.9.0 && prebuildify --target 14.17.6 && prebuildify --target 12.18.0",
-    "before-publish": "prebuildify-ci download && prebuildify --target 16.9.0 && prebuildify --target 14.17.6 && prebuildify --target 12.18.0 && prebuildify --target electron@13.1.4",
+    "prebuild:darwin": "prebuildify --arch=arm64 --target 17.0.1 && prebuildify --arch=arm64 --target 16.9.0 && prebuildify --arch=arm64 --target 14.17.6 && prebuildify --target 17.0.1 && prebuildify --target 16.9.0 && prebuildify --target 14.17.6 && prebuildify --target 12.18.0",
+    "prebuild:default": "prebuildify --target 17.0.1 && prebuildify --target 16.9.0 && prebuildify --target 14.17.6 && prebuildify --target 12.18.0",
+    "before-publish": "prebuildify-ci download && prebuildify --target 17.0.1 && prebuildify --target 16.9.0 && prebuildify --target 14.17.6 && prebuildify --target 12.18.0 && prebuildify --target electron@13.1.4",
     "test": ""
   },
   "main": "./index.js",
