@@ -6,6 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux_2_24_x86_64
     steps:
+      - run: ldd --version ldd
       - uses: actions/checkout@v2
       - name: Setup node
         uses: actions/setup-node@v2
@@ -13,10 +14,10 @@ jobs:
           node-version: 12
       - run: npm install
       - run: npm run prebuild
-      - run: zip -r prebuild-darwin.zip prebuilds
-      - run: hexdump "prebuilds/darwin-x64/node.abi93.node" | head -10
+      - run: tar --create --verbose --file=prebuild-linux.tar --directory=prebuilds .
+      - run: hexdump "prebuilds/linux-x64/node.abi93.node" | head -10
       - name: Prebuild
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: prebuild-darwin.zip
+          files: prebuild-linux.tar
