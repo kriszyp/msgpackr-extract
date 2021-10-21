@@ -1,29 +1,13 @@
 name: Test and Prebuild
 on: [push]
 jobs:
-  build-mac:
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: macos-11
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup node
-        uses: actions/setup-node@v2
-        with:
-          node-version: 12
-      - run: npm install
-      - run: npm run prebuild
-      - run: zip -r prebuild-darwin.zip prebuilds
-      - run: hexdump "prebuilds/darwin-x64/node.abi93.node" | head -10
-      - name: Prebuild
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: prebuild-darwin.zip
   build-ubuntu:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
-    container: quay.io/pypa/manylinux_2_24_aarch64
+    container: quay.io/pypa/manylinux_2_24_x86_64
     steps:
+      - run: sudo apt-get install -y gcc-8-aarch64-linux-gnu
+      - run: sudo apt-get install -y g++-8-aarch64-linux-gnu
       - run: ldd --version ldd
       - uses: actions/checkout@v2
       - name: Setup node
@@ -31,6 +15,10 @@ jobs:
         with:
           node-version: 12
       - run: npm install
+      - run: npm run prebuild-arm64
+        env:
+          CC=aarch64-linux-gnu-gcc-8
+          CXX=aarch64-linux-gnu-g++-8
       - run: npm run prebuild
       - run: tar --create --verbose --file=prebuild-linux.tar -C=prebuilds .
       - name: Prebuild
