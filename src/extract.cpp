@@ -5,11 +5,10 @@ provides much better performance. This will parse and produce up to 256 strings 
 times as necessary to get more strings. This must be partially capable of parsing MessagePack so it can know where to
 find the string tokens and determine their position and length. All strings are decoded as UTF-8.
 */
-#include <v8.h>
-#include <node.h>
-#include <node_buffer.h>
-#include <nan.h>
-using namespace v8;
+#include <napi.h>
+#include <node_api.h>
+
+using namespace Napi;
 
 #ifndef thread_local
 #ifdef __GNUC__
@@ -24,19 +23,19 @@ using namespace v8;
 #endif
 
 const int MAX_TARGET_SIZE = 255;
-typedef int (*token_handler)(uint8_t* source, int position, int size);
+typedef int (*token_handler)(Env env, uint8_t* source, int position, int size);
 token_handler tokenTable[256] = {};
 class Extractor {
 public:
-	v8::Local<v8::Value> target[MAX_TARGET_SIZE + 1]; // leave one for the queued string
+	Value target[MAX_TARGET_SIZE + 1]; // leave one for the queued string
 
 	uint8_t* source;
 	int position = 0;
 	int writePosition = 0;
 	int stringStart = 0;
 	int lastStringEnd = 0;
-	Isolate *isolate = Isolate::GetCurrent();
-	void readString(int length, bool allowStringBlocks) {
+
+	void readString(Env env, int length, bool allowStringBlocks) {
 		int start = position;
 		int end = position + length;
 		if (allowStringBlocks) { // for larger strings, we don't bother to check every character for being latin, and just go right to creating a new string
@@ -51,18 +50,22 @@ public:
 		if (position < end) {
 			// non-latin character
 			if (lastStringEnd) {
-				target[writePosition++] = String::NewFromOneByte(isolate,  (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
+				napi_value value;
+				napi_create_string_latin1(env, (const char*) source + stringStart, lastStringEnd - stringStart, &value);
+				target[writePosition++] = String(env, value);
 				lastStringEnd = 0;
 			}
 			// use standard utf-8 conversion
-			target[writePosition++] = Nan::New<v8::String>((char*) source + start, (int) length).ToLocalChecked();
+			target[writePosition++] = String::New(env, (const char*) source + start, (int) length);
 			position = end;
 			return;
 		}
 
 		if (lastStringEnd) {
 			if (start - lastStringEnd > 40 || end - stringStart > 6000) {
-				target[writePosition++] = String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
+				napi_value value;
+				napi_create_string_latin1(env, (const char*) source + stringStart, lastStringEnd - stringStart, &value);
+				target[writePosition++] = String(env, value);
 				stringStart = start;
 			}
 		} else {
@@ -71,7 +74,7 @@ public:
 		lastStringEnd = end;
 	}
 
-	Local<Value> extractStrings(int startingPosition, int size, uint8_t* inputSource) {
+	Value extractStrings(Env env, int startingPosition, int size, uint8_t* inputSource) {
 		writePosition = 0;
 		lastStringEnd = 0;
 		position = startingPosition;
@@ -84,50 +87,50 @@ public:
 				// fixstr, we want to convert this
 				token -= 0xa0;
 				if (token + position > size) {
-					Nan::ThrowError("Unexpected end of buffer reading string");
-					return Nan::Null();
+					TypeError::New(env, "Unexpected end of buffer reading string").ThrowAsJavaScriptException();
+					return env.Null();
 				}
-				readString(token, true);
+				readString(env,token, true);
 				if (writePosition >= MAX_TARGET_SIZE)
 					break;
 			} else if (token <= 0xdb && token >= 0xd9) {
 				if (token == 0xd9) { //str 8
 					if (position >= size) {
-						Nan::ThrowError("Unexpected end of buffer reading string");
-						return Nan::Null();
+						TypeError::New(env, "Unexpected end of buffer reading string").ThrowAsJavaScriptException();
+						return env.Null();
 					}
 					int length = source[position++];
 					if (length + position > size) {
-						Nan::ThrowError("Unexpected end of buffer reading string");
-						return Nan::Null();
+						TypeError::New(env, "Unexpected end of buffer reading string").ThrowAsJavaScriptException();
+						return env.Null();
 					}
-					readString(length, true);
+					readString(env,length, true);
 				} else if (token == 0xda) { //str 16
 					if (2 + position > size) {
-						Nan::ThrowError("Unexpected end of buffer reading string");
-						return Nan::Null();
+						TypeError::New(env, "Unexpected end of buffer reading string").ThrowAsJavaScriptException();
+						return env.Null();
 					}
 					int length = source[position++] << 8;
 					length += source[position++];
 					if (length + position > size) {
-						Nan::ThrowError("Unexpected end of buffer reading string");
-						return Nan::Null();
+						TypeError::New(env, "Unexpected end of buffer reading string").ThrowAsJavaScriptException();
+						return env.Null();
 					}
-					readString(length, false);
+					readString(env,length, false);
 				} else { //str 32
 					if (4 + position > size) {
-						Nan::ThrowError("Unexpected end of buffer reading string");
-						return Nan::Null();
+						TypeError::New(env, "Unexpected end of buffer reading string").ThrowAsJavaScriptException();
+						return env.Null();
 					}
 					int length = source[position++] << 24;
 					length += source[position++] << 16;
 					length += source[position++] << 8;
 					length += source[position++];
 					if (length + position > size) {
-						Nan::ThrowError("Unexpected end of buffer reading string");
-						return Nan::Null();
+						TypeError::New(env, "Unexpected end of buffer reading string").ThrowAsJavaScriptException();
+						return env.Null();
 					}
-					readString(length, false);
+					readString(env, length, false);
 				}
 				if (writePosition >= MAX_TARGET_SIZE)
 					break;
@@ -136,35 +139,35 @@ public:
 				if ((size_t ) handle < 20) {
 					position += (size_t ) handle;
 				} else {
-					position = tokenTable[token](source, position, size);
+					position = tokenTable[token](env, source, position, size);
 					if (position < 0) {
-						Nan::ThrowError("Unexpected end of buffer");
-						return Nan::Null();	
+						TypeError::New(env, "Unexpected end of buffer").ThrowAsJavaScriptException();
+						return env.Null();
 					}
 				}
 			}
 		}
 
 		if (lastStringEnd) {
-			if (writePosition == 0)
-				return String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
-			target[writePosition++] = String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
+			napi_value value;
+			napi_create_string_latin1(env, (const char*) source + stringStart, lastStringEnd - stringStart, &value);
+			if (writePosition == 0) {
+				return String(env, value);
+			}
+			target[writePosition++] = String(env, value);
 		} else if (writePosition == 1) {
 			return target[0];
 		}
-#if NODE_VERSION_AT_LEAST(12,0,0)
-		return Array::New(isolate, target, writePosition);
-#else
-		Local<Array> array = Array::New(isolate, writePosition);
-		Local<Context> context = Nan::GetCurrentContext();
+
+		Array array = Array::New(env, writePosition);
 		for (int i = 0; i < writePosition; i++) {
-			array->Set(context, i, target[i]);
+			array.Set(i, target[i]);
 		}
 		return array;
-#endif
 	}
 };
-void setupTokenTable() {
+
+void setupTokenTable(Env env) {
 	for (int i = 0; i < 256; i++) {
 		tokenTable[i] = nullptr;
 	}
@@ -185,18 +188,18 @@ void setupTokenTable() {
 	// fixext 16
 	tokenTable[0xd8] = (token_handler) 17;
 	// bin 8
-	tokenTable[0xc4] = ([](uint8_t* source, int position, int size) -> int {
+	tokenTable[0xc4] = ([](Env env, uint8_t* source, int position, int size) -> int {
 		if (position >= size) {
-			Nan::ThrowError("Unexpected end of buffer");
+			TypeError::New(env, "Unexpected end of buffer").ThrowAsJavaScriptException();
 			return size;
 		}
 		int length = source[position++];
 		return position + length;
 	});
 	// bin 16
-	tokenTable[0xc5] = ([](uint8_t* source, int position, int size) -> int {
+	tokenTable[0xc5] = ([](Env env, uint8_t* source, int position, int size) -> int {
 		if (position + 2 > size) {
-			Nan::ThrowError("Unexpected end of buffer");
+			TypeError::New(env, "Unexpected end of buffer").ThrowAsJavaScriptException();
 			return size;
 		}
 		int length = source[position++] << 8;
@@ -204,7 +207,7 @@ void setupTokenTable() {
 		return position + length;
 	});
 	// bin 32
-	tokenTable[0xc6] = ([](uint8_t* source, int position, int size) -> int {
+	tokenTable[0xc6] = ([](Env env, uint8_t* source, int position, int size) -> int {
 		if (position + 4 > size)
 			return -1;
 		int length = source[position++] << 24;
@@ -214,7 +217,7 @@ void setupTokenTable() {
 		return position + length;
 	});
 	// ext 8
-	tokenTable[0xc7] = ([](uint8_t* source, int position, int size) -> int {
+	tokenTable[0xc7] = ([](Env env, uint8_t* source, int position, int size) -> int {
 		if (position >= size)
 			return -1;
 		int length = source[position++];
@@ -222,7 +225,7 @@ void setupTokenTable() {
 		return position + length;
 	});
 	// ext 16
-	tokenTable[0xc8] = ([](uint8_t* source, int position, int size) -> int {
+	tokenTable[0xc8] = ([](Env env, uint8_t* source, int position, int size) -> int {
 		if (position + 2 > size)
 			return -1;
 		int length = source[position++] << 8;
@@ -231,7 +234,7 @@ void setupTokenTable() {
 		return position + length;
 	});
 	// ext 32
-	tokenTable[0xc9] = ([](uint8_t* source, int position, int size) -> int {
+	tokenTable[0xc9] = ([](Env env, uint8_t* source, int position, int size) -> int {
 		if (position + 4 > size)
 			return -1;
 		int length = source[position++] << 24;
@@ -245,25 +248,37 @@ void setupTokenTable() {
 
 static thread_local Extractor* extractor;
 
-NAN_METHOD(extractStrings) {
-	Local<Context> context = Nan::GetCurrentContext();
-	int position = Local<Number>::Cast(info[0])->IntegerValue(context).FromJust();
-	int size = Local<Number>::Cast(info[1])->IntegerValue(context).FromJust();
-	if (info[2]->IsArrayBufferView()) {
-		uint8_t* source = (uint8_t*) node::Buffer::Data(info[2]);
-		info.GetReturnValue().Set(extractor->extractStrings(position, size, source));
+Value extractStrings(const CallbackInfo& info) {
+  Env env = info.Env();
+	int position = info[0].As<Number>();
+	int size = info[1].As<Number>();
+	if (info[2].IsTypedArray()) {
+    	void* source = info[2].As<TypedArray>().ArrayBuffer().Data();
+		return extractor->extractStrings(env, position, size, (uint8_t*) source);
 	}
+  return env.Undefined();
 }
 
-NAN_METHOD(isOneByte) {
-	info.GetReturnValue().Set(Nan::New<Boolean>(Local<String>::Cast(info[0])->IsOneByte()));
+Value isOneByte(const CallbackInfo& info) {
+  	Env env = info.Env();
+	size_t length;
+	napi_get_value_string_latin1(env, info[0], nullptr, 0, &length);
+
+  	return Boolean::New(env, length == 1);
 }
 
-void initializeModule(v8::Local<v8::Object> exports) {
+Object Init(Env env, Object exports) {
 	extractor = new Extractor(); // create our thread-local extractor
-	setupTokenTable();
-	Nan::SetMethod(exports, "extractStrings", extractStrings);
-	Nan::SetMethod(exports, "isOneByte", isOneByte);
+	setupTokenTable(env);
+	exports.Set(
+    String::New(env, "extractStrings"),
+    Function::New(env, extractStrings)
+  );
+	exports.Set(
+    String::New(env, "isOneByte"),
+    Function::New(env, isOneByte)
+  );
+	return exports;
 }
 
-NODE_MODULE_CONTEXT_AWARE(extractor, initializeModule);
+NODE_API_MODULE(extractor, Init)

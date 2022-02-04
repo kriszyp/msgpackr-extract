@@ -20,7 +20,6 @@
   "main": "./index.js",
   "gypfile": true,
   "dependencies": {
-    "nan": "^2.14.2",
     "node-gyp-build": "^4.2.3"
   },
   "devDependencies": {
