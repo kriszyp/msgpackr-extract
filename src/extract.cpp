@@ -253,8 +253,9 @@ Value extractStrings(const CallbackInfo& info) {
 	int position = info[0].As<Number>();
 	int size = info[1].As<Number>();
 	if (info[2].IsTypedArray()) {
-    	void* source = info[2].As<TypedArray>().ArrayBuffer().Data();
-		return extractor->extractStrings(env, position, size, (uint8_t*) source);
+		TypedArray typedArray = info[2].As<TypedArray>();
+    	uint8_t* source = ((uint8_t*) typedArray.ArrayBuffer().Data()) + typedArray.ByteOffset();
+		return extractor->extractStrings(env, position, size, source);
 	}
   return env.Undefined();
 }

@@ -20,6 +20,7 @@
   "main": "./index.js",
   "gypfile": true,
   "dependencies": {
+    "node-addon-api": "^4.3.0",
     "node-gyp-build": "^4.2.3"
   },
   "devDependencies": {
