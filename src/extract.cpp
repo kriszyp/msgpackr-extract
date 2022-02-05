@@ -262,8 +262,8 @@ NAN_METHOD(isOneByte) {
 void initializeModule(v8::Local<v8::Object> exports) {
 	extractor = new Extractor(); // create our thread-local extractor
 	setupTokenTable();
-	Nan::SetMethod(exports, "extractStrings", extractStrings);
 	Nan::SetMethod(exports, "isOneByte", isOneByte);
+	Nan::SetMethod(exports, "extractStrings", extractStrings);
 }
 
 NODE_MODULE_CONTEXT_AWARE(extractor, initializeModule);
