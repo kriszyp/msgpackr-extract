@@ -5,6 +5,7 @@ provides much better performance. This will parse and produce up to 256 strings 
 times as necessary to get more strings. This must be partially capable of parsing MessagePack so it can know where to
 find the string tokens and determine their position and length. All strings are decoded as UTF-8.
 */
+#include <v8.h>
 #include <napi.h>
 #include <node_api.h>
 
@@ -27,13 +28,14 @@ typedef int (*token_handler)(Env env, uint8_t* source, int position, int size);
 token_handler tokenTable[256] = {};
 class Extractor {
 public:
-	Value target[MAX_TARGET_SIZE + 1]; // leave one for the queued string
+	v8::Local<v8::Value> target[MAX_TARGET_SIZE + 1]; // leave one for the queued string
 
 	uint8_t* source;
 	int position = 0;
 	int writePosition = 0;
 	int stringStart = 0;
 	int lastStringEnd = 0;
+	v8::Isolate *isolate = v8::Isolate::GetCurrent();
 
 	void readString(Env env, int length, bool allowStringBlocks) {
 		int start = position;
@@ -50,22 +52,18 @@ public:
 		if (position < end) {
 			// non-latin character
 			if (lastStringEnd) {
-				napi_value value;
-				napi_create_string_latin1(env, (const char*) source + stringStart, lastStringEnd - stringStart, &value);
-				target[writePosition++] = String(env, value);
+				target[writePosition++] = v8::String::NewFromOneByte(isolate,  (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
 				lastStringEnd = 0;
 			}
 			// use standard utf-8 conversion
-			target[writePosition++] = String::New(env, (const char*) source + start, (int) length);
+			target[writePosition++] = v8::String::NewFromUtf8(isolate, (char*) source + start, v8::NewStringType::kNormal, length).ToLocalChecked();
 			position = end;
 			return;
 		}
 
 		if (lastStringEnd) {
 			if (start - lastStringEnd > 40 || end - stringStart > 6000) {
-				napi_value value;
-				napi_create_string_latin1(env, (const char*) source + stringStart, lastStringEnd - stringStart, &value);
-				target[writePosition++] = String(env, value);
+				target[writePosition++] = v8::String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
 				stringStart = start;
 			}
 		} else {
@@ -74,7 +72,7 @@ public:
 		lastStringEnd = end;
 	}
 
-	Value extractStrings(Env env, int startingPosition, int size, uint8_t* inputSource) {
+	napi_value extractStrings(Env env, int startingPosition, int size, uint8_t* inputSource) {
 		writePosition = 0;
 		lastStringEnd = 0;
 		position = startingPosition;
@@ -147,23 +145,31 @@ public:
 				}
 			}
 		}
-
+		v8::Local<v8::Value> v8ReturnValue;
 		if (lastStringEnd) {
-			napi_value value;
-			napi_create_string_latin1(env, (const char*) source + stringStart, lastStringEnd - stringStart, &value);
 			if (writePosition == 0) {
-				return String(env, value);
+				v8ReturnValue = v8::String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
+				goto done;
 			}
-			target[writePosition++] = String(env, value);
+			target[writePosition++] = v8::String::NewFromOneByte(isolate, (uint8_t*) source + stringStart, v8::NewStringType::kNormal, lastStringEnd - stringStart).ToLocalChecked();
 		} else if (writePosition == 1) {
-			return target[0];
+			v8ReturnValue = target[0];
+			goto done;
 		}
-
-		Array array = Array::New(env, writePosition);
+//#if NODE_VERSION_AT_LEAST(12,0,0)
+		v8ReturnValue = v8::Array::New(isolate, target, writePosition);
+		done:
+		napi_value returnValue;
+		memcpy(&returnValue, &v8ReturnValue, sizeof(napi_value));
+		return returnValue;
+/*#else
+		v8::Local<v8::Array> array = v8::Array::New(isolate, writePosition);
+		v8::Local<v8::Context> context = v8::Isolate::GetCurrentContext();
 		for (int i = 0; i < writePosition; i++) {
-			array.Set(i, target[i]);
+			array->Set(context, i, target[i]);
 		}
-		return array;
+		return array;*/
+//#endif
 	}
 };
 
@@ -248,7 +254,7 @@ void setupTokenTable(Env env) {
 
 static thread_local Extractor* extractor;
 
-Value extractStrings(const CallbackInfo& info) {
+napi_value extractStrings(const CallbackInfo& info) {
   Env env = info.Env();
 	int position = info[0].As<Number>();
 	int size = info[1].As<Number>();
@@ -260,7 +266,7 @@ Value extractStrings(const CallbackInfo& info) {
   return env.Undefined();
 }
 
-Value isOneByte(const CallbackInfo& info) {
+napi_value isOneByte(const CallbackInfo& info) {
   	Env env = info.Env();
 	size_t length;
 	napi_get_value_string_latin1(env, info[0], nullptr, 0, &length);

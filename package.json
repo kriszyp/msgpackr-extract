@@ -11,10 +11,10 @@
   "scripts": {
     "install": "node-gyp-build",
     "recompile": "node-gyp build",
-    "before-publish": "prebuildify-ci download && prebuildify --napi",
-    "prebuild": "prebuildify --target 17.2.0 && prebuildify --napi",
-    "prebuild-musl": "prebuildify --napi --libc musl --tag-libc",
-    "prebuild-arm64": "prebuildify --napi --arch=arm64 --tag-libc",
+    "before-publish": "prebuildify-ci download && prebuildify --napi --target 12.22.7",
+    "prebuild": "prebuildify --napi --target 12.22.7",
+    "prebuild-musl": "prebuildify --napi --libc musl --tag-libc --target 12.22.7",
+    "prebuild-arm64": "prebuildify --napi --arch=arm64 --tag-libc --target 12.22.7",
     "test": ""
   },
   "main": "./index.js",
