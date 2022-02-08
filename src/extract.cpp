@@ -260,24 +260,12 @@ Value extractStrings(const CallbackInfo& info) {
   return env.Undefined();
 }
 
-Value isOneByte(const CallbackInfo& info) {
-  	Env env = info.Env();
-	size_t length;
-	napi_get_value_string_latin1(env, info[0], nullptr, 0, &length);
-
-  	return Boolean::New(env, length == 1);
-}
-
 Object Init(Env env, Object exports) {
 	extractor = new Extractor(); // create our thread-local extractor
 	setupTokenTable(env);
 	exports.Set(
     String::New(env, "extractStrings"),
     Function::New(env, extractStrings)
-  );
-	exports.Set(
-    String::New(env, "isOneByte"),
-    Function::New(env, isOneByte)
   );
 	return exports;
 }
