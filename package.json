@@ -23,7 +23,7 @@
     "node-gyp-build": "^4.2.3"
   },
   "devDependencies": {
-    "prebuildify": "kriszyp/prebuildify#b78c5a9",
+    "prebuildify": "^5.0.0",
     "prebuildify-ci": "^1.0.5"
   }
 }

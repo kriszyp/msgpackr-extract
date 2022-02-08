@@ -23,11 +23,11 @@ using namespace Napi;
 #endif
 
 const int MAX_TARGET_SIZE = 255;
-typedef int (*token_handler)(Env env, uint8_t* source, int position, int size);
+typedef int (*token_handler)(uint8_t* source, int position, int size);
 token_handler tokenTable[256] = {};
 class Extractor {
 public:
-	Value target[MAX_TARGET_SIZE + 1]; // leave one for the queued string
+	napi_value target[MAX_TARGET_SIZE + 1]; // leave one for the queued string
 
 	uint8_t* source;
 	int position = 0;
@@ -52,11 +52,13 @@ public:
 			if (lastStringEnd) {
 				napi_value value;
 				napi_create_string_latin1(env, (const char*) source + stringStart, lastStringEnd - stringStart, &value);
-				target[writePosition++] = String(env, value);
+				target[writePosition++] = value;
 				lastStringEnd = 0;
 			}
 			// use standard utf-8 conversion
-			target[writePosition++] = String::New(env, (const char*) source + start, (int) length);
+			napi_value value;
+			napi_create_string_utf8(env, (const char*) source + start, (int) length, &value);
+			target[writePosition++] = value;
 			position = end;
 			return;
 		}
@@ -65,7 +67,7 @@ public:
 			if (start - lastStringEnd > 40 || end - stringStart > 6000) {
 				napi_value value;
 				napi_create_string_latin1(env, (const char*) source + stringStart, lastStringEnd - stringStart, &value);
-				target[writePosition++] = String(env, value);
+				target[writePosition++] = value;
 				stringStart = start;
 			}
 		} else {
@@ -74,7 +76,7 @@ public:
 		lastStringEnd = end;
 	}
 
-	Value extractStrings(Env env, int startingPosition, int size, uint8_t* inputSource) {
+	napi_value extractStrings(Env env, int startingPosition, int size, uint8_t* inputSource) {
 		writePosition = 0;
 		lastStringEnd = 0;
 		position = startingPosition;
@@ -139,7 +141,7 @@ public:
 				if ((size_t ) handle < 20) {
 					position += (size_t ) handle;
 				} else {
-					position = tokenTable[token](env, source, position, size);
+					position = tokenTable[token](source, position, size);
 					if (position < 0) {
 						TypeError::New(env, "Unexpected end of buffer").ThrowAsJavaScriptException();
 						return env.Null();
@@ -152,22 +154,24 @@ public:
 			napi_value value;
 			napi_create_string_latin1(env, (const char*) source + stringStart, lastStringEnd - stringStart, &value);
 			if (writePosition == 0) {
-				return String(env, value);
+				return value;
 			}
-			target[writePosition++] = String(env, value);
+			target[writePosition++] = value;
 		} else if (writePosition == 1) {
 			return target[0];
 		}
-
-		Array array = Array::New(env, writePosition);
+		napi_value array;
+		napi_create_array_with_length(env, writePosition, &array);
+		//Array array = Array::New(env, writePosition);
 		for (int i = 0; i < writePosition; i++) {
-			array.Set(i, target[i]);
+			napi_set_element(env, array, i, target[i]);
+			//array.Set(i, target[i]);
 		}
 		return array;
 	}
 };
 
-void setupTokenTable(Env env) {
+void setupTokenTable() {
 	for (int i = 0; i < 256; i++) {
 		tokenTable[i] = nullptr;
 	}
@@ -188,26 +192,24 @@ void setupTokenTable(Env env) {
 	// fixext 16
 	tokenTable[0xd8] = (token_handler) 17;
 	// bin 8
-	tokenTable[0xc4] = ([](Env env, uint8_t* source, int position, int size) -> int {
+	tokenTable[0xc4] = ([](uint8_t* source, int position, int size) -> int {
 		if (position >= size) {
-			TypeError::New(env, "Unexpected end of buffer").ThrowAsJavaScriptException();
-			return size;
+			return -1;
 		}
 		int length = source[position++];
 		return position + length;
 	});
 	// bin 16
-	tokenTable[0xc5] = ([](Env env, uint8_t* source, int position, int size) -> int {
+	tokenTable[0xc5] = ([](uint8_t* source, int position, int size) -> int {
 		if (position + 2 > size) {
-			TypeError::New(env, "Unexpected end of buffer").ThrowAsJavaScriptException();
-			return size;
+			return -1;
 		}
 		int length = source[position++] << 8;
 		length += source[position++];
 		return position + length;
 	});
 	// bin 32
-	tokenTable[0xc6] = ([](Env env, uint8_t* source, int position, int size) -> int {
+	tokenTable[0xc6] = ([](uint8_t* source, int position, int size) -> int {
 		if (position + 4 > size)
 			return -1;
 		int length = source[position++] << 24;
@@ -217,7 +219,7 @@ void setupTokenTable(Env env) {
 		return position + length;
 	});
 	// ext 8
-	tokenTable[0xc7] = ([](Env env, uint8_t* source, int position, int size) -> int {
+	tokenTable[0xc7] = ([](uint8_t* source, int position, int size) -> int {
 		if (position >= size)
 			return -1;
 		int length = source[position++];
@@ -225,7 +227,7 @@ void setupTokenTable(Env env) {
 		return position + length;
 	});
 	// ext 16
-	tokenTable[0xc8] = ([](Env env, uint8_t* source, int position, int size) -> int {
+	tokenTable[0xc8] = ([](uint8_t* source, int position, int size) -> int {
 		if (position + 2 > size)
 			return -1;
 		int length = source[position++] << 8;
@@ -234,7 +236,7 @@ void setupTokenTable(Env env) {
 		return position + length;
 	});
 	// ext 32
-	tokenTable[0xc9] = ([](Env env, uint8_t* source, int position, int size) -> int {
+	tokenTable[0xc9] = ([](uint8_t* source, int position, int size) -> int {
 		if (position + 4 > size)
 			return -1;
 		int length = source[position++] << 24;
@@ -248,7 +250,7 @@ void setupTokenTable(Env env) {
 
 static thread_local Extractor* extractor;
 
-Value extractStrings(const CallbackInfo& info) {
+napi_value extractStrings(const CallbackInfo& info) {
   Env env = info.Env();
 	int position = info[0].As<Number>();
 	int size = info[1].As<Number>();
@@ -262,7 +264,7 @@ Value extractStrings(const CallbackInfo& info) {
 
 Object Init(Env env, Object exports) {
 	extractor = new Extractor(); // create our thread-local extractor
-	setupTokenTable(env);
+	setupTokenTable();
 	exports.Set(
     String::New(env, "extractStrings"),
     Function::New(env, extractStrings)
