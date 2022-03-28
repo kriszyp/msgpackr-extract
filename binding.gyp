@@ -2,6 +2,7 @@
   "variables": {
       "os_linux_compiler%": "gcc",
       "enable_v8%": "true",
+      "enable_pointer_compression%": "false",
       "build_v8_with_gn": "false"
   },
   "conditions": [
@@ -52,7 +53,10 @@
           ],
         }],
         ["enable_v8!='false'", {
-          "defines": ["ENABLE_V8_API=1"],
+          "defines": ["ENABLE_V8_API=1"]
+        }],
+        ["enable_pointer_compression=='true'", {
+          "defines": ["V8_COMPRESS_POINTERS", "V8_COMPRESS_POINTERS_IN_ISOLATE_CAGE"],
         }],
       ],
     }
