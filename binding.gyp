@@ -10,9 +10,9 @@
       "sources": [
         "src/extract.cpp",
       ],
-      "include_dirs": [
-        "<!(node -e \"require('nan')\")",
-      ],
+      "defines": [ "NAPI_DISABLE_CPP_EXCEPTIONS" ],
+      "include_dirs" : ["<!(node -p \"require('node-addon-api').include_dir\")"],
+      "dependencies": ["<!(node -p \"require('node-addon-api').gyp\")"],
       "conditions": [
         ["OS=='linux'", {
           "variables": {
