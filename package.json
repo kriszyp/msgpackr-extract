@@ -15,7 +15,7 @@
     "prebuild": "prebuildify --optional-packages --napi --target 12.22.7",
     "prebuild-libc": "prebuildify --optional-packages --napi --tag-libc --target 12.22.7",
     "prepublishOnly": "cd prebuilds/win32-x64 && npm publish --otp %OTP% && cd ../darwin32-x64 && npm publish --otp %OTP% && cd ../.. && npm publish --otp %OTP%",
-    "test": "index.js"
+    "test": "node ./index.js"
   },
   "main": "./index.js",
   "gypfile": true,
