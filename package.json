@@ -19,7 +19,7 @@
   "main": "./index.js",
   "gypfile": true,
   "dependencies": {
-    "node-gyp-build": "kriszyp/node-gyp-build#optional-packages",
+    "node-gyp-build": "kriszyp/node-gyp-build#optional-packages"
   },
   "devDependencies": {
     "prebuildify": "kriszyp/prebuildify#optional-packages",
