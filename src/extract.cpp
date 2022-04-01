@@ -5,10 +5,7 @@ provides much better performance. This will parse and produce up to 256 strings 
 times as necessary to get more strings. This must be partially capable of parsing MessagePack so it can know where to
 find the string tokens and determine their position and length. All strings are decoded as UTF-8.
 */
-#include <napi.h>
 #include <node_api.h>
-
-using namespace Napi;
 
 #ifndef thread_local
 #ifdef __GNUC__
@@ -25,17 +22,25 @@ using namespace Napi;
 const int MAX_TARGET_SIZE = 255;
 typedef int (*token_handler)(uint8_t* source, int position, int size);
 token_handler tokenTable[256] = {};
+napi_value unexpectedEnd(napi_env env) {
+	napi_value returnValue;
+	napi_get_undefined(env, &returnValue);
+	napi_throw_type_error(env, NULL, "Unexpected end of buffer reading string");
+	return returnValue;
+}
+
 class Extractor {
 public:
 	napi_value target[MAX_TARGET_SIZE + 1]; // leave one for the queued string
-
+	napi_ref targetArray;
+	bool hasTargetArray = false;
 	uint8_t* source;
 	int position = 0;
 	int writePosition = 0;
 	int stringStart = 0;
 	int lastStringEnd = 0;
 
-	void readString(Env env, int length, bool allowStringBlocks) {
+	void readString(napi_env env, int length, bool allowStringBlocks) {
 		int start = position;
 		int end = position + length;
 		if (allowStringBlocks) { // for larger strings, we don't bother to check every character for being latin, and just go right to creating a new string
@@ -76,7 +81,7 @@ public:
 		lastStringEnd = end;
 	}
 
-	napi_value extractStrings(Env env, int startingPosition, int size, uint8_t* inputSource) {
+	napi_value extractStrings(napi_env env, int startingPosition, int size, uint8_t* inputSource, napi_value array) {
 		writePosition = 0;
 		lastStringEnd = 0;
 		position = startingPosition;
@@ -89,8 +94,7 @@ public:
 				// fixstr, we want to convert this
 				token -= 0xa0;
 				if (token + position > size) {
-					TypeError::New(env, "Unexpected end of buffer reading string").ThrowAsJavaScriptException();
-					return env.Null();
+					return unexpectedEnd(env);
 				}
 				readString(env,token, true);
 				if (writePosition >= MAX_TARGET_SIZE)
@@ -98,39 +102,33 @@ public:
 			} else if (token <= 0xdb && token >= 0xd9) {
 				if (token == 0xd9) { //str 8
 					if (position >= size) {
-						TypeError::New(env, "Unexpected end of buffer reading string").ThrowAsJavaScriptException();
-						return env.Null();
+						return unexpectedEnd(env);
 					}
 					int length = source[position++];
 					if (length + position > size) {
-						TypeError::New(env, "Unexpected end of buffer reading string").ThrowAsJavaScriptException();
-						return env.Null();
+						return unexpectedEnd(env);
 					}
 					readString(env,length, true);
 				} else if (token == 0xda) { //str 16
 					if (2 + position > size) {
-						TypeError::New(env, "Unexpected end of buffer reading string").ThrowAsJavaScriptException();
-						return env.Null();
+						return unexpectedEnd(env);
 					}
 					int length = source[position++] << 8;
 					length += source[position++];
 					if (length + position > size) {
-						TypeError::New(env, "Unexpected end of buffer reading string").ThrowAsJavaScriptException();
-						return env.Null();
+						return unexpectedEnd(env);
 					}
 					readString(env,length, false);
 				} else { //str 32
 					if (4 + position > size) {
-						TypeError::New(env, "Unexpected end of buffer reading string").ThrowAsJavaScriptException();
-						return env.Null();
+						return unexpectedEnd(env);
 					}
 					int length = source[position++] << 24;
 					length += source[position++] << 16;
 					length += source[position++] << 8;
 					length += source[position++];
 					if (length + position > size) {
-						TypeError::New(env, "Unexpected end of buffer reading string").ThrowAsJavaScriptException();
-						return env.Null();
+						return unexpectedEnd(env);
 					}
 					readString(env, length, false);
 				}
@@ -143,8 +141,7 @@ public:
 				} else {
 					position = tokenTable[token](source, position, size);
 					if (position < 0) {
-						TypeError::New(env, "Unexpected end of buffer").ThrowAsJavaScriptException();
-						return env.Null();
+						return unexpectedEnd(env);
 					}
 				}
 			}
@@ -154,20 +151,36 @@ public:
 			napi_value value;
 			napi_create_string_latin1(env, (const char*) source + stringStart, lastStringEnd - stringStart, &value);
 			if (writePosition == 0) {
+				if (!hasTargetArray) {
+					hasTargetArray = true;
+					napi_create_reference(env, array, 1, &targetArray);
+				}
 				return value;
 			}
 			target[writePosition++] = value;
 		} else if (writePosition == 1) {
+			if (!hasTargetArray) {
+				hasTargetArray = true;
+				napi_create_reference(env, array, 1, &targetArray);
+			}
 			return target[0];
 		}
-		napi_value array;
-		napi_create_array_with_length(env, writePosition, &array);
-		//Array array = Array::New(env, writePosition);
-		for (int i = 0; i < writePosition; i++) {
-			napi_set_element(env, array, i, target[i]);
-			//array.Set(i, target[i]);
+		//napi_value array;
+		//napi_get_reference_value(env, targetArray, &array);
+		//napi_create_array_with_length(env, writePosition, &array);
+		if (hasTargetArray) {
+			napi_get_reference_value(env, targetArray, &array);
+			hasTargetArray = false;
 		}
-		return array;
+		int i = 0;
+		for (i = 0; i < writePosition; i++) {
+			napi_set_element(env, array, i, target[i]);
+		}
+		napi_value length;
+		napi_create_int32(env, i, &length);
+		return length;/*
+		napi_set_element(env, array, i, undefined);
+		return array;*/
 	}
 };
 
@@ -247,29 +260,25 @@ void setupTokenTable() {
 		return position + length;
 	});
 }
-
 static thread_local Extractor* extractor;
-
-napi_value extractStrings(const CallbackInfo& info) {
-  Env env = info.Env();
-	int position = info[0].As<Number>();
-	int size = info[1].As<Number>();
-	if (info[2].IsTypedArray()) {
-		TypedArray typedArray = info[2].As<TypedArray>();
-    	uint8_t* source = ((uint8_t*) typedArray.ArrayBuffer().Data()) + typedArray.ByteOffset();
-		return extractor->extractStrings(env, position, size, source);
-	}
-  return env.Undefined();
+napi_value extractStrings(napi_env env, napi_callback_info info) {
+	size_t argc = extractor->hasTargetArray ? 3 : 4;
+	napi_value args[4];
+	napi_get_cb_info(env, info, &argc, args, NULL, NULL);
+	uint32_t position;
+	uint32_t size;
+	napi_get_value_uint32(env, args[0], &position);
+	napi_get_value_uint32(env, args[1], &size);
+	uint8_t* source;
+	napi_get_typedarray_info(env, args[2], NULL, NULL, (void**) &source, NULL, NULL);
+	return extractor->extractStrings(env, position, size, source, args[3]);
 }
-
-Object Init(Env env, Object exports) {
+#define EXPORT_NAPI_FUNCTION(name, func) { napi_property_descriptor desc = { name, 0, func, 0, 0, 0, (napi_property_attributes) (napi_writable | napi_configurable), 0 }; napi_define_properties(env, exports, 1, &desc); }
+napi_value Init(napi_env env, napi_value exports) {
 	extractor = new Extractor(); // create our thread-local extractor
 	setupTokenTable();
-	exports.Set(
-    String::New(env, "extractStrings"),
-    Function::New(env, extractStrings)
-  );
+	EXPORT_NAPI_FUNCTION("extractStrings", extractStrings);
 	return exports;
 }
 
-NODE_API_MODULE(extractor, Init)
+NAPI_MODULE(extractor, Init)
