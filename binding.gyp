@@ -1,8 +1,21 @@
 {
   "variables": {
       "os_linux_compiler%": "gcc",
+      "enable_v8%": "true",
       "build_v8_with_gn": "false"
   },
+  "conditions": [
+    ['OS=="win"', {
+      "variables": {
+        "enable_v8%": "<!(echo %ENABLE_V8_FUNCTIONS%)",
+      }
+    }],
+    ['OS!="win"', {
+      "variables": {
+        "enable_v8%": "<!(echo $ENABLE_V8_FUNCTIONS%)",
+      }
+    }]
+  ],
   "targets": [
     {
       "target_name": "msgpackr-extract",
@@ -37,6 +50,9 @@
             "-fvisibility=hidden",
             "-O3"
           ],
+        }],
+        ["enable_v8!='false'", {
+          "defines": ["ENABLE_V8_API=1"],
         }],
       ],
     }

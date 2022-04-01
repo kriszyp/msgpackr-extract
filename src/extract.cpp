@@ -6,6 +6,9 @@ times as necessary to get more strings. This must be partially capable of parsin
 find the string tokens and determine their position and length. All strings are decoded as UTF-8.
 */
 #include <node_api.h>
+#if ENABLE_V8_API
+#include <v8.h>
+#endif
 
 #ifndef thread_local
 #ifdef __GNUC__
@@ -32,7 +35,7 @@ napi_value unexpectedEnd(napi_env env) {
 class Extractor {
 public:
 	napi_value target[MAX_TARGET_SIZE + 1]; // leave one for the queued string
-	napi_ref targetArray;
+	// napi_ref targetArray; // could consider reenabling this optimization for napi
 	bool hasTargetArray = false;
 	uint8_t* source;
 	int position = 0;
@@ -81,7 +84,7 @@ public:
 		lastStringEnd = end;
 	}
 
-	napi_value extractStrings(napi_env env, int startingPosition, int size, uint8_t* inputSource, napi_value array) {
+	napi_value extractStrings(napi_env env, int startingPosition, int size, uint8_t* inputSource) {
 		writePosition = 0;
 		lastStringEnd = 0;
 		position = startingPosition;
@@ -151,36 +154,39 @@ public:
 			napi_value value;
 			napi_create_string_latin1(env, (const char*) source + stringStart, lastStringEnd - stringStart, &value);
 			if (writePosition == 0) {
-				if (!hasTargetArray) {
+				/*if (!hasTargetArray) {
 					hasTargetArray = true;
 					napi_create_reference(env, array, 1, &targetArray);
-				}
+				}*/
 				return value;
 			}
 			target[writePosition++] = value;
 		} else if (writePosition == 1) {
-			if (!hasTargetArray) {
+			/*if (!hasTargetArray) {
 				hasTargetArray = true;
 				napi_create_reference(env, array, 1, &targetArray);
-			}
+			}*/
 			return target[0];
 		}
-		//napi_value array;
-		//napi_get_reference_value(env, targetArray, &array);
-		//napi_create_array_with_length(env, writePosition, &array);
-		if (hasTargetArray) {
+		napi_value array;
+		#if ENABLE_V8_API
+		v8::Local<v8::Array> v8Array = v8::Array::New(v8::Isolate::GetCurrent(), (v8::Local<v8::Value>*) target, writePosition);
+		memcpy(&array, &v8Array, sizeof(array));
+		#else
+		napi_create_array_with_length(env, writePosition, &array);
+		/*if (hasTargetArray) {
 			napi_get_reference_value(env, targetArray, &array);
 			hasTargetArray = false;
-		}
-		int i = 0;
-		for (i = 0; i < writePosition; i++) {
+		}*/
+		for (int i = 0; i < writePosition; i++) {
 			napi_set_element(env, array, i, target[i]);
-		}
+		}/*
 		napi_value length;
 		napi_create_int32(env, i, &length);
-		return length;/*
-		napi_set_element(env, array, i, undefined);
-		return array;*/
+		return length;
+		napi_set_element(env, array, i, undefined); */
+		#endif
+		return array;
 	}
 };
 
@@ -262,8 +268,8 @@ void setupTokenTable() {
 }
 static thread_local Extractor* extractor;
 napi_value extractStrings(napi_env env, napi_callback_info info) {
-	size_t argc = extractor->hasTargetArray ? 3 : 4;
-	napi_value args[4];
+	size_t argc = 3;
+	napi_value args[3];
 	napi_get_cb_info(env, info, &argc, args, NULL, NULL);
 	uint32_t position;
 	uint32_t size;
@@ -271,7 +277,7 @@ napi_value extractStrings(napi_env env, napi_callback_info info) {
 	napi_get_value_uint32(env, args[1], &size);
 	uint8_t* source;
 	napi_get_typedarray_info(env, args[2], NULL, NULL, (void**) &source, NULL, NULL);
-	return extractor->extractStrings(env, position, size, source, args[3]);
+	return extractor->extractStrings(env, position, size, source);
 }
 #define EXPORT_NAPI_FUNCTION(name, func) { napi_property_descriptor desc = { name, 0, func, 0, 0, 0, (napi_property_attributes) (napi_writable | napi_configurable), 0 }; napi_define_properties(env, exports, 1, &desc); }
 napi_value Init(napi_env env, napi_value exports) {

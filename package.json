@@ -1,7 +1,7 @@
 {
   "name": "msgpackr-extract",
   "author": "Kris Zyp",
-  "version": "2.0.0-beta",
+  "version": "1.1.0-beta",
   "description": "Node addon for string extraction for msgpackr",
   "license": "MIT",
   "repository": {
@@ -12,15 +12,28 @@
     "install": "node-gyp-build",
     "recompile": "node-gyp build",
     "before-publish": "prebuildify-ci download && prebuildify --optional-packages --napi --target 12.22.7",
-    "prebuild": "prebuildify --optional-packages --napi --target 12.22.7",
-    "prebuild-libc": "prebuildify --optional-packages --napi --tag-libc --target 12.22.7",
-    "prepublishOnly": "cd prebuilds/win32-x64 && npm publish --otp %OTP% && cd ../darwin-x64 && npm publish --otp %OTP% && cd ../darwin-arm64 && npm publish --otp %OTP% && cd ../linux-x64 && npm publish --otp %OTP% && cd ../linux-arm64 && npm publish --otp %OTP% && cd ../.. && npm publish --otp %OTP%",
+    "prebuild": "prebuildify --optional-packages --napi --target 16.14.0 && prebuildify --optional-packages --target 16.14.0",
+    "prebuild-libc": "prebuildify --optional-packages --napi --tag-libc --target 16.14.0 && prebuildify --optional-packages --tag-libc --target 16.14.0",
+    "prepublishOnly": "node set-optional-deps.cjs",
+    "publish-all": "cd prebuilds/win32-x64 && npm publish --otp %OTP% && cd ../darwin-x64 && npm publish --otp %OTP% && cd ../darwin-arm64 && npm publish --otp %OTP% && cd ../linux-x64 && npm publish --otp %OTP% && cd ../linux-arm64 && npm publish --otp %OTP% && cd ../.. && npm publish --otp %OTP%",
     "test": "node ./index.js"
   },
   "main": "./index.js",
   "gypfile": true,
   "dependencies": {
     "node-gyp-build": "kriszyp/node-gyp-build#optional-packages"
+  },
+  "files": [
+    "index.js",
+    "/src",
+    "/*.gyp"
+  ],
+  "optionalDependencies": {
+    "msgpackr-extract-darwin-arm64": "1.1.0-beta",
+    "msgpackr-extract-darwin-x64": "1.1.0-beta",
+    "msgpackr-extract-linux-arm64": "1.1.0-beta",
+    "msgpackr-extract-linux-x64": "1.1.0-beta",
+    "msgpackr-extract-win32-x64": "1.1.0-beta"
   },
   "devDependencies": {
     "prebuildify": "kriszyp/prebuildify#optional-packages",
