@@ -1,7 +1,7 @@
 {
   "name": "msgpackr-extract",
   "author": "Kris Zyp",
-  "version": "1.1.0-napi",
+  "version": "2.0.0-beta",
   "description": "Node addon for string extraction for msgpackr",
   "license": "MIT",
   "repository": {
@@ -11,19 +11,18 @@
   "scripts": {
     "install": "node-gyp-build",
     "recompile": "node-gyp build",
-    "before-publish": "prebuildify-ci download && prebuildify --napi --target 12.22.7",
+    "before-publish": "prebuildify-ci download && prebuildify --optional-packages --napi --target 12.22.7",
     "prebuild": "prebuildify --optional-packages --napi --target 12.22.7",
-    "prebuild-musl": "prebuildify --napi --libc musl --tag-libc --target 12.22.7",
-    "prebuild-arm64": "prebuildify --napi --arch=arm64 --tag-libc --target 12.22.7",
+    "prebuild-libc": "prebuildify --optional-packages --napi --tag-libc --target 12.22.7",
     "test": "index.js"
   },
   "main": "./index.js",
   "gypfile": true,
   "dependencies": {
-    "node-gyp-build": "^4.2.3"
+    "node-gyp-build": "kriszyp/node-gyp-build#optional-packages",
   },
   "devDependencies": {
-    "prebuildify": "^5.0.0",
+    "prebuildify": "kriszyp/prebuildify#optional-packages",
     "prebuildify-ci": "^1.0.5"
   }
 }
