@@ -12,7 +12,7 @@
     }],
     ['OS!="win"', {
       "variables": {
-        "enable_v8%": "<!(echo $ENABLE_V8_FUNCTIONS%)",
+        "enable_v8%": "<!(echo $ENABLE_V8_FUNCTIONS)",
       }
     }]
   ],
