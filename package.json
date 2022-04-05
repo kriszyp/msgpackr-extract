@@ -1,7 +1,7 @@
 {
   "name": "msgpackr-extract",
   "author": "Kris Zyp",
-  "version": "1.1.0-beta",
+  "version": "1.1.0",
   "description": "Node addon for string extraction for msgpackr",
   "license": "MIT",
   "repository": {
@@ -11,9 +11,9 @@
   "scripts": {
     "install": "node-gyp-build",
     "recompile": "node-gyp build",
-    "before-publish": "prebuildify-ci download && prebuildify --target 16.14.0 && set ENABLE_V8_FUNCTIONS=false&& prebuildify --optional-packages --napi --target 16.14.0",
-    "prebuild": "prebuildify --optional-packages --target 16.14.0",
-    "prebuild-libc": "prebuildify --tag-libc --target 16.14.0 && ENABLE_V8_FUNCTIONS=false prebuildify --optional-packages --napi --tag-libc --target 16.14.0",
+    "before-publish": "prebuildify-ci download && prebuildify --target 16.14.2 && set ENABLE_V8_FUNCTIONS=false&& prebuildify --optional-packages --napi --target 16.14.2",
+    "prebuild": "prebuildify --optional-packages --target 16.14.2",
+    "prebuild-libc": "prebuildify --tag-libc --target 16.14.2 && ENABLE_V8_FUNCTIONS=false prebuildify --optional-packages --napi --tag-libc --target 16.14.2",
     "prepublishOnly": "node set-optional-deps.cjs",
     "publish-all": "cd prebuilds/win32-x64 && npm publish --otp %OTP% && cd ../darwin-x64 && npm publish --otp %OTP% && cd ../darwin-arm64 && npm publish --otp %OTP% && cd ../linux-x64 && npm publish --otp %OTP% && cd ../linux-arm64 && npm publish --otp %OTP% && cd ../.. && npm publish --otp %OTP%",
     "test": "node ./index.js"
