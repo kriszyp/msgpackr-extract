@@ -575,21 +575,41 @@ mkdirp-classic@^0.5.2, mkdirp-classic@^0.5.3:
   dependencies:
     minimist "^1.2.5"
 
-node-abi@electron/node-abi#7ca86e13e158e061943c368b20b9ec24baf4b239:
-  version "0.0.0-development"
-  resolved "https://codeload.github.com/electron/node-abi/tar.gz/7ca86e13e158e061943c368b20b9ec24baf4b239"
+msgpackr-extract-darwin-arm64@1.1.0:
+  version "1.1.0-beta"
+  resolved "https://registry.yarnpkg.com/msgpackr-extract-darwin-arm64/-/msgpackr-extract-darwin-arm64-1.1.0-beta.tgz#371f6df8df95538a521656b72d39b1dc290cb76c"
+  integrity sha512-baWLQnmlqf4Nhr9/r5UsokaoGO2AO8QqFoaxHP3RoLKq5kUlDt6syuM2PDk629f7CEeQlST/pajNoYgRHQpimA==
+
+msgpackr-extract-darwin-x64@1.1.0:
+  version "2.0.0-beta"
+  resolved "https://registry.yarnpkg.com/msgpackr-extract-darwin-x64/-/msgpackr-extract-darwin-x64-2.0.0-beta.tgz#80d4bd4be07a8a0a862fbf2374e72cc01ad43f7a"
+  integrity sha512-wVOepY15tHaBrT2l3ffX649i2W4KuJsxFiY03B8edq9RiprSJH0tvxG+i0fPH7iO5C+pnnAEPTBXNpeTM0gOxQ==
+
+msgpackr-extract-linux-arm64@1.1.0:
+  version "1.1.0-beta"
+  resolved "https://registry.yarnpkg.com/msgpackr-extract-linux-arm64/-/msgpackr-extract-linux-arm64-1.1.0-beta.tgz#1fdc69cb6a1774c514f83423a037f5b495eeaf5d"
+  integrity sha512-UYX5Pn5miqPsFk5m31K87ACIb5Qx33X8PFsuSXDOYIYrwrV8+xYMzkyTxdxqGYWItM2CfD/rbG9ckyDsshi0Gg==
+
+msgpackr-extract-linux-x64@1.1.0:
+  version "2.0.0-beta"
+  resolved "https://registry.yarnpkg.com/msgpackr-extract-linux-x64/-/msgpackr-extract-linux-x64-2.0.0-beta.tgz#5c286f6e7d6233dde1ab1d21f22868b92a2921e1"
+  integrity sha512-scGSmZ+fo+qQudwQCexfHNTDBqqY1TvZvyAGAk++nj8hT19GNAlT9wWAldv2G3ij9B65RaFSNP/xyDt3zpg7Lg==
+
+msgpackr-extract-win32-x64@1.1.0:
+  version "2.0.0-beta"
+  resolved "https://registry.yarnpkg.com/msgpackr-extract-win32-x64/-/msgpackr-extract-win32-x64-2.0.0-beta.tgz#8005c98d0393e280f17af82c02c13796b0728207"
+  integrity sha512-8jhsI79oPJH2lAoLtNHJbgwfXdb8MW46EkOE3x0fCmGHFZEOeVLCdoftuF/+VTmfQbcfEgS9T+6N036wVgzmMg==
+
+node-abi@^3.3.0:
+  version "3.8.0"
+  resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-3.8.0.tgz#679957dc8e7aa47b0a02589dbfde4f77b29ccb32"
+  integrity sha512-tzua9qWWi7iW4I42vUPKM+SfaF0vQSLAm4yO5J83mSwB7GeoWrDKC/K+8YCnYNwqP5duwazbw2X9l4m8SC2cUw==
   dependencies:
     semver "^7.3.5"
 
-node-addon-api@^4.3.0:
+node-gyp-build@kriszyp/node-gyp-build#optional-packages:
   version "4.3.0"
-  resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-4.3.0.tgz#52a1a0b475193e0928e98e0426a0d1254782b77f"
-  integrity sha512-73sE9+3UaLYYFmDsFZnqCInzPyh3MqIwZO9cw58yIqAZhONrrabrYyYe3TuIqtIiOuTXVhsGau8hcrhhwSsDIQ==
-
-node-gyp-build@^4.2.3:
-  version "4.3.0"
-  resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.3.0.tgz#9f256b03e5826150be39c764bf51e993946d71a3"
-  integrity sha512-iWjXZvmboq0ja1pUGULQBexmxq8CV4xBhX7VDOTbL7ZR4FOowwY/VOtRxBN/yKxmdGoIp4j5ysNT4u3S2pDQ3Q==
+  resolved "https://codeload.github.com/kriszyp/node-gyp-build/tar.gz/c9952cb77e89d2cd8b6c2d4d056a06d41834b305"
 
 npm-run-path@^3.1.0:
   version "3.1.0"
@@ -660,14 +680,14 @@ prebuildify-ci@^1.0.5:
     tar-fs "^1.16.0"
     unzipper "^0.9.11"
 
-prebuildify@kriszyp/prebuildify#b78c5a9:
-  version "4.2.1"
-  resolved "https://codeload.github.com/kriszyp/prebuildify/tar.gz/b78c5a9521809fc3d84041bb91e06d529b821a9b"
+prebuildify@kriszyp/prebuildify#optional-packages:
+  version "5.0.0"
+  resolved "https://codeload.github.com/kriszyp/prebuildify/tar.gz/f9fa455b87dfb77ca82f578b9cba8b2808125f64"
   dependencies:
     execspawn "^1.0.1"
     minimist "^1.2.5"
     mkdirp-classic "^0.5.3"
-    node-abi electron/node-abi#7ca86e13e158e061943c368b20b9ec24baf4b239
+    node-abi "^3.3.0"
     npm-run-path "^3.1.0"
     pump "^3.0.0"
     tar-fs "^2.1.0"
