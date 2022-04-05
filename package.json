@@ -21,7 +21,7 @@
   "main": "./index.js",
   "gypfile": true,
   "dependencies": {
-    "node-gyp-build": "kriszyp/node-gyp-build#optional-packages"
+    "node-gyp-build-optional-packages": "^4.3.0"
   },
   "files": [
     "index.js",
