@@ -20,7 +20,6 @@
   "targets": [
     {
       "target_name": "msgpackr-extract",
-      "win_delay_load_hook": "false",
       "sources": [
         "src/extract.cpp",
       ],
