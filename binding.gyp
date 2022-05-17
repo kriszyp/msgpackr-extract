@@ -19,7 +19,7 @@
   ],
   "targets": [
     {
-      "target_name": "msgpackr-extract",
+      "target_name": "extract",
       "sources": [
         "src/extract.cpp",
       ],

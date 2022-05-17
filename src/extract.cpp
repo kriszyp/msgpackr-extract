@@ -154,18 +154,10 @@ public:
 			napi_value value;
 			napi_create_string_latin1(env, (const char*) source + stringStart, lastStringEnd - stringStart, &value);
 			if (writePosition == 0) {
-				/*if (!hasTargetArray) {
-					hasTargetArray = true;
-					napi_create_reference(env, array, 1, &targetArray);
-				}*/
 				return value;
 			}
 			target[writePosition++] = value;
 		} else if (writePosition == 1) {
-			/*if (!hasTargetArray) {
-				hasTargetArray = true;
-				napi_create_reference(env, array, 1, &targetArray);
-			}*/
 			return target[0];
 		}
 		napi_value array;
@@ -174,17 +166,9 @@ public:
 		memcpy(&array, &v8Array, sizeof(array));
 		#else
 		napi_create_array_with_length(env, writePosition, &array);
-		/*if (hasTargetArray) {
-			napi_get_reference_value(env, targetArray, &array);
-			hasTargetArray = false;
-		}*/
 		for (int i = 0; i < writePosition; i++) {
 			napi_set_element(env, array, i, target[i]);
-		}/*
-		napi_value length;
-		napi_create_int32(env, i, &length);
-		return length;
-		napi_set_element(env, array, i, undefined); */
+		}
 		#endif
 		return array;
 	}
@@ -280,11 +264,9 @@ napi_value extractStrings(napi_env env, napi_callback_info info) {
 	return extractor->extractStrings(env, position, size, source);
 }
 #define EXPORT_NAPI_FUNCTION(name, func) { napi_property_descriptor desc = { name, 0, func, 0, 0, 0, (napi_property_attributes) (napi_writable | napi_configurable), 0 }; napi_define_properties(env, exports, 1, &desc); }
-napi_value Init(napi_env env, napi_value exports) {
+NAPI_MODULE_INIT() {
 	extractor = new Extractor(); // create our thread-local extractor
 	setupTokenTable();
 	EXPORT_NAPI_FUNCTION("extractStrings", extractStrings);
 	return exports;
 }
-
-NAPI_MODULE(extractor, Init)
