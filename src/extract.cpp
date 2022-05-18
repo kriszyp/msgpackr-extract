@@ -34,7 +34,6 @@ napi_value unexpectedEnd(napi_env env) {
 
 class Extractor {
 public:
-	napi_value target[MAX_TARGET_SIZE + 1]; // leave one for the queued string
 	// napi_ref targetArray; // could consider reenabling this optimization for napi
 	bool hasTargetArray = false;
 	uint8_t* source;
@@ -43,7 +42,7 @@ public:
 	int stringStart = 0;
 	int lastStringEnd = 0;
 
-	void readString(napi_env env, int length, bool allowStringBlocks) {
+	void readString(napi_env env, int length, bool allowStringBlocks, napi_value* target) {
 		int start = position;
 		int end = position + length;
 		if (allowStringBlocks) { // for larger strings, we don't bother to check every character for being latin, and just go right to creating a new string
@@ -85,6 +84,7 @@ public:
 	}
 
 	napi_value extractStrings(napi_env env, int startingPosition, int size, uint8_t* inputSource) {
+		napi_value target[MAX_TARGET_SIZE + 1]; // leave one for the queued string
 		writePosition = 0;
 		lastStringEnd = 0;
 		position = startingPosition;
@@ -99,7 +99,7 @@ public:
 				if (token + position > size) {
 					return unexpectedEnd(env);
 				}
-				readString(env,token, true);
+				readString(env, token, true, target);
 				if (writePosition >= MAX_TARGET_SIZE)
 					break;
 			} else if (token <= 0xdb && token >= 0xd9) {
@@ -111,7 +111,7 @@ public:
 					if (length + position > size) {
 						return unexpectedEnd(env);
 					}
-					readString(env,length, true);
+					readString(env,length, true, target);
 				} else if (token == 0xda) { //str 16
 					if (2 + position > size) {
 						return unexpectedEnd(env);
@@ -121,7 +121,7 @@ public:
 					if (length + position > size) {
 						return unexpectedEnd(env);
 					}
-					readString(env,length, false);
+					readString(env,length, false, target);
 				} else { //str 32
 					if (4 + position > size) {
 						return unexpectedEnd(env);
@@ -133,7 +133,7 @@ public:
 					if (length + position > size) {
 						return unexpectedEnd(env);
 					}
-					readString(env, length, false);
+					readString(env, length, false, target);
 				}
 				if (writePosition >= MAX_TARGET_SIZE)
 					break;
