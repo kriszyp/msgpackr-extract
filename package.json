@@ -13,6 +13,7 @@
     "recompile": "node-gyp rebuild",
     "before-publish": "prebuildify-ci download && prebuildify --target 16.14.2 && set ENABLE_V8_FUNCTIONS=false&& prebuildify --platform-packages --napi --target 16.14.2 && node set-optional-deps.cjs",
     "prebuild": "prebuildify --target 16.14.2",
+    "prebuild-win32": "prebuildify --target 16.14.2 && set ENABLE_V8_FUNCTIONS=false&& prebuildify --platform-packages --napi --target 16.14.2",
     "prebuild-libc": "prebuildify --tag-libc --target 16.14.2 && ENABLE_V8_FUNCTIONS=false prebuildify --platform-packages --napi --tag-libc --target 16.14.2",
     "publish-all": "cd prebuilds/win32-x64 && npm publish --access public && cd ../darwin-x64 && npm publish --access public && cd ../darwin-arm64 && npm publish --access public && cd ../linux-x64 && npm publish --access public && cd ../linux-arm64 && npm publish --access public  && cd ../linux-arm && npm publish --access public && cd ../.. && npm publish --access public",
     "test": "node ./index.js"
@@ -20,7 +21,7 @@
   "main": "./index.js",
   "gypfile": true,
   "dependencies": {
-    "node-gyp-build-optional-packages": "5.0.2"
+    "node-gyp-build-optional-packages": "5.0.3"
   },
   "files": [
     "index.js",
