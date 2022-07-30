@@ -15,6 +15,7 @@
     "prebuild": "prebuildify --target 16.14.2",
     "prebuild-win32": "prebuildify --target 16.14.2 && set ENABLE_V8_FUNCTIONS=false&& prebuildify --platform-packages --napi --target 16.14.2",
     "prebuild-libc": "prebuildify --tag-libc --target 16.14.2 && ENABLE_V8_FUNCTIONS=false prebuildify --platform-packages --napi --tag-libc --target 16.14.2",
+    "prebuild-libc-alpine": "prebuildify-cross --image linux-arm64-musl --tag-libc --target 16.14.2 && prebuildify-cross --image alpine --tag-libc --target 16.14.2 && ENABLE_V8_FUNCTIONS=false prebuildify-cross --image linux-arm64-musl --napi --tag-libc --target 16.14.2",
     "publish-all": "cd prebuilds/win32-x64 && npm publish --access public && cd ../darwin-x64 && npm publish --access public && cd ../darwin-arm64 && npm publish --access public && cd ../linux-x64 && npm publish --access public && cd ../linux-arm64 && npm publish --access public  && cd ../linux-arm && npm publish --access public && cd ../.. && npm publish --access public",
     "test": "node ./index.js"
   },
@@ -36,6 +37,7 @@
   },
   "devDependencies": {
     "prebuildify": "kriszyp/prebuildify#optional-packages",
-    "prebuildify-ci": "^1.0.5"
+    "prebuildify-ci": "^1.0.5",
+    "prebuildify-cross": "5.0.0"
   }
 }
