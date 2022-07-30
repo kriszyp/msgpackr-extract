@@ -11,7 +11,7 @@
   "scripts": {
     "install": "node-gyp-build-optional-packages",
     "recompile": "node-gyp rebuild",
-    "before-publish": "prebuildify-ci download && prebuildify-platform-packages --target 16.14.2 && set ENABLE_V8_FUNCTIONS=false&& prebuildify-platform-packages --platform-packages --napi --target 16.14.2 && node set-optional-deps.cjs",
+    "before-publish": "prebuildify-ci download && node set-optional-deps.cjs",
     "prebuild": "prebuildify-platform-packages --target 16.14.2",
     "prebuild-win32": "prebuildify-platform-packages --target 16.14.2 && set ENABLE_V8_FUNCTIONS=false&& prebuildify-platform-packages --platform-packages --napi --target 16.14.2",
     "prebuild-libc": "prebuildify-platform-packages --tag-libc --target 16.14.2 && ENABLE_V8_FUNCTIONS=false prebuildify-platform-packages --platform-packages --napi --tag-libc --target 16.14.2",
