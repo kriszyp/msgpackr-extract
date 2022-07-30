@@ -71,7 +71,7 @@ jobs:
       - run: apk add python3 py3-pip build-base git
       - uses: actions/checkout@v2
       - run: npm install
-      - run: wget https://musl.cc/aarch64-linux-musl-cross.tgz
+      - run: wget https://more.musl.cc/11.2.1/x86_64-linux-musl/aarch64-linux-musl-cross.tgz
       - run: tar -xf aarch64-linux-musl-cross.tgz && pwd && ls
       - run: npm run prebuild-libc
         env:
@@ -79,7 +79,7 @@ jobs:
           PREBUILD_ARCH: arm64
           CC: ${PWD}/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
           CXX: ${PWD}/aarch64-linux-musl-cross/bin/aarch64-linux-musl-g++
-      - run: wget https://musl.cc/armv7l-linux-musleabihf-cross.tgz
+      - run: wget https://more.musl.cc/11.2.1/x86_64-linux-musl/armv7l-linux-musleabihf-cross.tgz
       - run: tar -xf armv7l-linux-musleabihf-cross.tgz && pwd && ls
       - run: npm run prebuild-libc
         env:
