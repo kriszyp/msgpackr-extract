@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-process.chdir(fileURLToPath(dirname(dirname(import.meta.url))));
+const { dirname } = require('path');
+const { fileURLToPath } = require('url');
+process.chdir(dirname(__dirname));
 process.argv[2] = 'download';
-import('prebuildify-ci');
+require('prebuildify-ci');
