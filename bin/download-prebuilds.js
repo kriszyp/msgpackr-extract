@@ -2,6 +2,10 @@
 
 const { dirname } = require('path');
 const { fileURLToPath } = require('url');
+const { exec } = require('child_process');
+
 process.chdir(dirname(__dirname));
-process.argv[2] = 'download';
-require('prebuildify-ci');
+exec('prebuildify-ci download', (error, stdout, stderr) => {
+	console.error(stderr);
+	console.log(stdout);
+});
