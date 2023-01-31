@@ -1,7 +1,7 @@
 {
   "name": "msgpackr-extract",
   "author": "Kris Zyp",
-  "version": "2.2.0",
+  "version": "3.0.0",
   "description": "Node addon for string extraction for msgpackr",
   "license": "MIT",
   "repository": {
@@ -22,7 +22,7 @@
   "main": "./index.js",
   "gypfile": true,
   "dependencies": {
-    "node-gyp-build-optional-packages": "5.0.3"
+    "node-gyp-build-optional-packages": "5.0.7"
   },
   "files": [
     "index.js",
