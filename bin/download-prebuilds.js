@@ -8,4 +8,6 @@ process.chdir(dirname(__dirname));
 exec('prebuildify-ci download', (error, stdout, stderr) => {
 	console.error(stderr);
 	console.log(stdout);
+	if (error?.code)
+		process.exit(error.code);
 });
