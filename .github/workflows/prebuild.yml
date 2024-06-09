@@ -10,6 +10,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 16
+      - run: python3 -m pip install setuptools
       - run: npm install
       - run: npm test
       - run: npm run prebuild-libc
