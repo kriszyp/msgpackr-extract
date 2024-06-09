@@ -22,7 +22,7 @@
   "main": "./index.js",
   "gypfile": true,
   "dependencies": {
-    "node-gyp-build-optional-packages": "5.2.1"
+    "node-gyp-build-optional-packages": "5.2.2"
   },
   "files": [
     "index.js",
