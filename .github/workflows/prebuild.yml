@@ -31,6 +31,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 16
+      - run: pip install setuptools
       - run: npm install
       - run: npm run prebuild-win32
       - run: tar --create --verbose --file=prebuild-win32.tar -C prebuilds .
