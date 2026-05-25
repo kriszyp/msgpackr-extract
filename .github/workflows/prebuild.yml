@@ -15,7 +15,7 @@ jobs:
       - run: npm run prebuild-libc-napi
       - run: npm run prebuild-libc-napi
         env:
-          PREBUILD_ARCH: arm64
+          PREBUILD_ARCH: x64
       - run: tar --create --format ustar --verbose --file=prebuild-darwin.tar -C prebuilds .
         if: startsWith(github.ref, 'refs/tags/')
       - name: Prebuild
