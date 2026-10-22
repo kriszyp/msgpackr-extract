@@ -11,6 +11,8 @@ jobs:
           node-version: 16
       - run: python3 -m pip install setuptools --break-system-packages
       - run: npm install
+      # npm install brings in the published platform binary; test the source being built instead
+      - run: npm run recompile
       - run: npm test
       - run: npm run prebuild-libc-napi
       - run: npm run prebuild-libc-napi
