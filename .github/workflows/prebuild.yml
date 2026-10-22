@@ -26,7 +26,8 @@ jobs:
         with:
           files: prebuild-darwin.tar
   build-test-win32:
-    runs-on: windows-latest
+    # windows-2025 ships Visual Studio 2026, which node-gyp 9 (bundled with Node 16 npm) cannot find
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
       - name: Setup node
