@@ -259,14 +259,27 @@ static thread_local Extractor* extractor;
 napi_value extractStrings(napi_env env, napi_callback_info info) {
 	size_t argc = 3;
 	napi_value args[3];
-	napi_get_cb_info(env, info, &argc, args, NULL, NULL);
+	if (napi_get_cb_info(env, info, &argc, args, NULL, NULL) != napi_ok || argc != 3) {
+		napi_throw_type_error(env, NULL, "extractStrings requires start, end, and an ArrayBuffer");
+		return NULL;
+	}
 	uint32_t position;
 	uint32_t size;
-	napi_get_value_uint32(env, args[0], &position);
-	napi_get_value_uint32(env, args[1], &size);
+	if (napi_get_value_uint32(env, args[0], &position) != napi_ok ||
+		napi_get_value_uint32(env, args[1], &size) != napi_ok) {
+		napi_throw_type_error(env, NULL, "start and end must be unsigned 32-bit numbers");
+		return NULL;
+	}
 	uint8_t* source;
 	size_t buffer_size;
-	napi_get_arraybuffer_info(env, args[2], (void**) &source, &buffer_size);
+	if (napi_get_arraybuffer_info(env, args[2], (void**) &source, &buffer_size) != napi_ok) {
+		napi_throw_type_error(env, NULL, "source must be an ArrayBuffer");
+		return NULL;
+	}
+	if (position > size || size > buffer_size) {
+		napi_throw_range_error(env, NULL, "start and end must be within the ArrayBuffer");
+		return NULL;
+	}
 	return extractor->extractStrings(env, position, size, source);
 }
 #define EXPORT_NAPI_FUNCTION(name, func) { napi_property_descriptor desc = { name, 0, func, 0, 0, 0, (napi_property_attributes) (napi_writable | napi_configurable), 0 }; napi_define_properties(env, exports, 1, &desc); }
