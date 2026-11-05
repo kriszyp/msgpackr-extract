@@ -114,8 +114,7 @@ jobs:
         with:
           files: prebuild-linux-arm64-glibc.tar
   build-linux-arm-glibc:
-    # no hosted armv7 runner, so cross-compile; Ubuntu 20.04's armhf glibc (2.31) is older than 2.34,
-    # which would version the pthread symbols and raise the floor
+    # no hosted armv7 runner, so cross-compile
     runs-on: ubuntu-24.04
     container: ubuntu:20.04
     steps:
@@ -134,6 +133,12 @@ jobs:
           PREBUILD_ARMV: 7
           CC: arm-linux-gnueabihf-gcc
           CXX: arm-linux-gnueabihf-g++
+      # this sysroot is glibc 2.31 and GCC 9; hold the glibc 2.28 / GCC 8 floor of the manylinux_2_28 builds
+      - run: |
+          for floor in GLIBC_2.28 GLIBCXX_3.4.25; do
+            need=$( (echo $floor; arm-linux-gnueabihf-objdump -T prebuilds/linux-arm/*.node | grep -oE "${floor%_*}_[0-9.]+") | sort -uV | tail -1)
+            [ "$need" = $floor ] || { echo "linux-arm prebuild needs $need, above $floor"; exit 1; }
+          done
       - run: tar --create --verbose --file=prebuild-linux-arm-glibc.tar -C prebuilds .
       - name: Prebuild
         if: startsWith(github.ref, 'refs/tags/')
