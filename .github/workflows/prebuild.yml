@@ -94,3 +94,55 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: prebuild-linux.tar
+  build-linux-arm64-glibc:
+    runs-on: ubuntu-24.04-arm
+    container: quay.io/pypa/manylinux_2_28_aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 16
+      - run: yum install -y python3
+      - run: npm install
+      - run: npm run prebuild-libc
+      - run: npm test
+      - run: tar --create --verbose --file=prebuild-linux-arm64-glibc.tar -C prebuilds .
+      - name: Prebuild
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: prebuild-linux-arm64-glibc.tar
+  build-linux-arm-glibc:
+    # no hosted armv7 runner, so cross-compile
+    runs-on: ubuntu-24.04
+    container: ubuntu:20.04
+    steps:
+      - run: apt-get update && apt-get install -y python3 make g++ gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+        env:
+          DEBIAN_FRONTEND: noninteractive
+      - uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 16
+      - run: npm install
+      - run: npm run prebuild-libc
+        env:
+          PREBUILD_ARCH: arm
+          PREBUILD_ARMV: 7
+          CC: arm-linux-gnueabihf-gcc
+          CXX: arm-linux-gnueabihf-g++
+      # this sysroot is glibc 2.31 and GCC 9; hold the glibc 2.28 / GCC 8 floor of the manylinux_2_28 builds
+      - run: |
+          symbols=$(arm-linux-gnueabihf-objdump -T prebuilds/linux-arm/*.node)
+          for floor in GLIBC_2.28 GLIBCXX_3.4.25 CXXABI_1.3.11; do
+            need=$( (echo $floor; echo "$symbols" | grep -oE "${floor%_*}_[0-9.]+") | sort -uV | tail -1)
+            [ "$need" = $floor ] || { echo "linux-arm prebuild needs $need, above $floor"; exit 1; }
+          done
+      - run: tar --create --verbose --file=prebuild-linux-arm-glibc.tar -C prebuilds .
+      - name: Prebuild
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: prebuild-linux-arm-glibc.tar
